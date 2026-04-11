@@ -1,4 +1,4 @@
-"""Tests para el transpiler de Habla (los tres backends)."""
+"""Tests para el transpiler de Habla (los cuatro backends: Python, Go, Rust, C)."""
 
 import ast as pyast
 import pytest
@@ -202,3 +202,75 @@ class TestRustBackend:
 
         code2 = rs("y = falso")
         assert "false" in code2
+
+
+def go(source: str) -> str:
+    return compile_to_source(source, target="go")
+
+
+# ─── Go backend (stub) ────────────────────────────────────────────────────────
+
+class TestGoBackend:
+    def test_package_main(self):
+        code = go('muestra "hola"')
+        assert "package main" in code
+
+    def test_fmt_import(self):
+        code = go('muestra "hola"')
+        assert '"fmt"' in code
+
+    def test_show_uses_println(self):
+        code = go('muestra "hola go"')
+        assert "fmt.Println" in code
+        assert "hola go" in code
+
+    def test_assignment_uses_walrus(self):
+        code = go("x = 42")
+        assert "x :=" in code
+        assert "42" in code
+
+    def test_if_uses_braces(self):
+        code = go("si x > 0\n  muestra x\n")
+        assert "if x > 0 {" in code
+        assert "}" in code
+
+    def test_for_range(self):
+        code = go("para x en lista\n  muestra x\n")
+        assert "range lista" in code
+        assert "fmt.Println" in code
+
+    def test_boolean_go_syntax(self):
+        code = go("x = cierto")
+        assert "true" in code
+        code2 = go("y = falso")
+        assert "false" in code2
+
+    def test_wraps_in_main(self):
+        code = go('muestra "test"')
+        assert "func main()" in code
+
+    def test_cyber_scan_generates_stub(self):
+        code = go('escanea target "127.0.0.1" en ports [22, 80]\n')
+        # El stub debe contener comentarios orientativos
+        assert "nmap" in code or "TODO" in code or "Go v0.3" in code
+
+    def test_logical_operators_go(self):
+        code = go("si x > 0 y y < 10\n  muestra x\n")
+        assert "&&" in code
+
+    def test_targets_registry(self):
+        from habla.backends import TARGETS
+        assert "python" in TARGETS
+        assert "go" in TARGETS
+        assert "rust" in TARGETS
+        assert "c" in TARGETS
+        assert TARGETS["go"]["status"] == "stub"
+        assert TARGETS["python"]["status"] == "funcional"
+
+    def test_base_backend_interface(self):
+        from habla.backends.base import HablaBackend, list_backends
+        backends = list_backends()
+        assert "go" in backends
+        assert "python" in backends
+        assert backends["go"]["extension"] == ".go"
+        assert backends["python"]["compile_cmd"] is None
