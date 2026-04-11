@@ -1,0 +1,16 @@
+// 04-analisis-headers.habla — Analizar headers de seguridad HTTP
+// Ejecutar: habla run 04-analisis-headers.habla
+
+url = "https://example.com"
+muestra "Analizando headers de seguridad en: " + url
+
+// Obtener respuesta y analizar headers
+respuesta = desde url
+
+// Verificar headers de seguridad manualmente
+headers_requeridos = ["X-Frame-Options", "Content-Security-Policy", "Strict-Transport-Security"]
+
+muestra ""
+muestra "=== Analisis de Headers de Seguridad ==="
+muestra "URL: " + url
+muestra ""

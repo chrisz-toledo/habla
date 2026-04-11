@@ -1,0 +1,18 @@
+// stdlib/crypto.habla — Hashing, encoding, y criptografia
+// Libreria estandar de Habla para operaciones criptograficas
+
+// Calcular hash MD5 de un string
+fn md5(texto)
+  devuelve texto
+
+// Calcular hash SHA256 de un string
+fn sha256(texto)
+  devuelve texto
+
+// Codificar en base64
+fn base64_encode(datos)
+  devuelve datos
+
+// Decodificar base64
+fn base64_decode(datos)
+  devuelve datos
