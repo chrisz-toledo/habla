@@ -289,13 +289,18 @@ class Parser:
         line = self.current().line
         self.expect(TokenType.KEYWORD, "guarda")
 
-        # guarda valor en "archivo" o guarda "archivo" (si es el primer token)
-        # Caso: guarda var en "file"
-        val = self.parse_expr()
+        # Formas soportadas:
+        #   guarda "archivo"                  -> value=None, filename="archivo"
+        #   guarda variable en "archivo"      -> value=variable, filename="archivo"
+        #   guarda variable a "archivo"       -> idem
+        #
+        # IMPORTANTE: usamos parse_postfix() (no parse_expr()) para el valor,
+        # evitando que 'en' sea consumido como operador binario 'in'.
+        val = self.parse_postfix()
         filename = None
         if self.match_value("en", "a"):
             self.consume()
-            filename = self.parse_expr()
+            filename = self.parse_primary()
         self._consume_newline()
         return SaveStatement(value=val, filename=filename, line=line)
 
@@ -676,6 +681,36 @@ class Parser:
         if tok.type == TokenType.KEYWORD and tok.value == "desde":
             return self.parse_desde()
 
+        # ─── Verbos cyber en contexto de expresion ──────────────────────────
+        # Permiten: subs = busca subdomains de dom
+        #           n = cuenta lista
+        #           resultado = escanea "ip" en ports [22, 80]
+
+        if tok.type == TokenType.KEYWORD and tok.value == "busca":
+            return self._parse_busca_expr()
+
+        if tok.type == TokenType.KEYWORD and tok.value == "cuenta":
+            self.consume()
+            # cuenta X — el argumento es la siguiente expresion primaria
+            src = self.parse_primary() if not self.match(TokenType.NEWLINE, TokenType.EOF) else None
+            return CountExpression(source=src, line=tok.line)
+
+        if tok.type == TokenType.KEYWORD and tok.value == "escanea":
+            return self.parse_cyber_scan_inline()
+
+        if tok.type == TokenType.KEYWORD and tok.value == "analiza":
+            return self._parse_analiza_expr()
+
+        if tok.type == TokenType.KEYWORD and tok.value == "genera":
+            self.consume()
+            if self.match_value("reporte"):
+                self.consume()
+            data = None
+            if self.match_value("con"):
+                self.consume()
+                data = self.parse_primary()
+            return GenerateReport(data=data, line=tok.line)
+
         # Identifier o keyword usado como identifier
         if tok.type in (TokenType.IDENTIFIER, TokenType.KEYWORD):
             self.consume()
@@ -685,6 +720,44 @@ class Parser:
             fmt("unexpected_token", token=tok.value or tok.type.name, line=tok.line, suggestion="una expresion"),
             tok.line, tok.col, self.filename,
         )
+
+    def _parse_busca_expr(self) -> Node:
+        """busca subdomains de X  /  busca vulns en X  — en contexto de expresion."""
+        line = self.current().line
+        self.consume()  # consume 'busca'
+        tok = self.current()
+        if tok.value == "subdomains":
+            self.consume()
+            if self.match_value("de"):
+                self.consume()
+            domain = self.parse_primary()
+            return CyberRecon(domain=domain, line=line)
+        if tok.value == "vulns":
+            self.consume()
+            target = None
+            severity = None
+            if self.match_value("en"):
+                self.consume()
+                target = self.parse_primary()
+            if self.match_value("donde"):
+                self.consume()
+                severity = self.parse_binary()
+            return CyberFindVulns(target=target, severity=severity, line=line)
+        # Fallback: 'busca' como identificador
+        return Identifier(name="busca", line=line)
+
+    def _parse_analiza_expr(self) -> Node:
+        """analiza headers de X  — en contexto de expresion."""
+        line = self.current().line
+        self.consume()  # consume 'analiza'
+        mode = "auto"
+        if self.match_value("headers"):
+            self.consume()
+            mode = "headers"
+        if self.match_value("de"):
+            self.consume()
+        source = self.parse_primary()
+        return CyberAnalyze(source=source, mode=mode, line=line)
 
     def parse_desde(self) -> HttpGet:
         line = self.current().line

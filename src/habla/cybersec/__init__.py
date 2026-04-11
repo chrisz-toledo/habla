@@ -9,6 +9,17 @@ from .capture import capture
 from .attack import attack
 from .analysis import analyze, analyze_headers, analyze_scan
 from .report import report
+from .crypto import (
+    hash_md5,
+    hash_sha1,
+    hash_sha256,
+    hash_sha512,
+    b64_encode,
+    b64_decode,
+    hmac_sha256,
+    generate_token,
+    verify_hash,
+)
 
 __all__ = [
     "scan",
@@ -21,4 +32,13 @@ __all__ = [
     "analyze_headers",
     "analyze_scan",
     "report",
+    "hash_md5",
+    "hash_sha1",
+    "hash_sha256",
+    "hash_sha512",
+    "b64_encode",
+    "b64_decode",
+    "hmac_sha256",
+    "generate_token",
+    "verify_hash",
 ]

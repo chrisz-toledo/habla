@@ -34,6 +34,13 @@ _HELPER_IMPORTS = {
     "analyze":          "from habla.cybersec.analysis import analyze as _habla_analyze",
     "analyze_headers":  "from habla.cybersec.analysis import analyze_headers as _habla_analyze_headers",
     "report":           "from habla.cybersec.report import report as _habla_report",
+    "hash_md5":         "from habla.cybersec.crypto import hash_md5 as _habla_hash_md5",
+    "hash_sha1":        "from habla.cybersec.crypto import hash_sha1 as _habla_hash_sha1",
+    "hash_sha256":      "from habla.cybersec.crypto import hash_sha256 as _habla_hash_sha256",
+    "hash_sha512":      "from habla.cybersec.crypto import hash_sha512 as _habla_hash_sha512",
+    "b64_encode":       "from habla.cybersec.crypto import b64_encode as _habla_b64_encode",
+    "b64_decode":       "from habla.cybersec.crypto import b64_decode as _habla_b64_decode",
+    "generate_token":   "from habla.cybersec.crypto import generate_token as _habla_generate_token",
 }
 
 # Traduccion de operadores

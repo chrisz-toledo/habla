@@ -13,7 +13,7 @@ muestra "Subdominios: " + cuenta subs
 muestra "=== Fase 2: Escaneo de Puertos ==="
 para sub en subs
   muestra "Escaneando: " + sub
-  escanea target en ports [80, 443, 8080, 8443]
+  escanea sub en ports [80, 443, 8080, 8443]
 
 // Fase 3: Reporte final
 muestra "=== Fase 3: Generando Reporte ==="

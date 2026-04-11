@@ -4,13 +4,9 @@
 url = "https://example.com"
 muestra "Analizando headers de seguridad en: " + url
 
-// Obtener respuesta y analizar headers
-respuesta = desde url
-
-// Verificar headers de seguridad manualmente
-headers_requeridos = ["X-Frame-Options", "Content-Security-Policy", "Strict-Transport-Security"]
+// Analizar headers de seguridad con el modulo de analisis
+analiza headers de url
 
 muestra ""
-muestra "=== Analisis de Headers de Seguridad ==="
-muestra "URL: " + url
-muestra ""
+muestra "Analisis completado."
+muestra "Revisa la puntuacion de seguridad arriba."
