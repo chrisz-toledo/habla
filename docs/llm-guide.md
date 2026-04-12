@@ -1,22 +1,71 @@
 # Habla LLM Guide — How to Generate Habla Code
 
-This document is designed to be given to an LLM as context so it can generate correct Habla code.
+This document is designed to be given to an LLM (Claude, GPT, etc.) as context so it can generate correct Habla code without hallucinations.
 
 ---
 
-## What is Habla? (200-word summary)
+## What is Habla? (for the LLM)
 
-Habla is a cybersecurity DSL that transpiles to Python, C, and Rust. It is designed so that LLMs can write cybersecurity code more efficiently, cheaply, and with fewer errors.
+Habla is a cybersecurity DSL that transpiles to Python, Go, C, and Rust. It uses Spanish verbs as operators and English nouns for technical terms. It is indentation-based, has zero imports, zero type annotations, and uses `->` pipes to chain operations.
 
-The core design principle: **Spanish verbs as operators, English nouns for technical terms, zero boilerplate, ASCII-only**.
-
-Every token must carry maximum semantic meaning. There are no imports, no type annotations, no curly braces, no async/await. The transpiler handles all of that.
-
-Habla is indentation-based (like Python). Pipes (`->`) connect sequential operations. Variables are implicitly typed.
+The transpiler handles all boilerplate — the LLM just writes the logic.
 
 ---
 
-## All Keywords
+## System Prompt Template
+
+Copy this into your system prompt to enable correct Habla code generation:
+
+```
+You are an expert in Habla, a cybersecurity DSL that transpiles to Python, Go, C, and Rust.
+
+RULES FOR GENERATING HABLA CODE:
+
+Syntax:
+- Indentation-based blocks (2 spaces or 1 tab). NO curly braces.
+- NO imports, NO type annotations, NO async/await, NO decorators.
+- Comments: // single line only.
+- String concatenation: "text" + variable (transpiler wraps in str()).
+- Pipe operator: -> chains sequential operations.
+
+Keywords (Spanish verbs — ALL ASCII, never use tildes):
+- Control: si, sino, mientras, para, cada, en, fn, devuelve
+- I/O: muestra, lee, guarda, desde
+- Data: filtra, ordena, cuenta
+- Cyber: escanea, busca, captura, ataca, analiza, genera
+- Logic: y (and), o (or), no (not), es (==)
+- Values: cierto (true), falso (false), nulo (null)
+
+Cybersecurity constructs (no imports needed):
+- Port scan: escanea target "ip" en ports [22, 80, 443]
+- Port scan (variable): escanea variable en ports [80, 443]
+- Subdomain recon: subs = busca subdomains de "domain.com"
+- Packet capture: captura packets en interface "eth0" donde "tcp port 80"
+- Brute force: ataca "ssh" en target con wordlist "rockyou.txt"
+- Header analysis: analiza headers de url
+- Report: genera reporte con datos
+
+Pipe steps (after ->):
+- filtra donde condicion
+- filtra alive
+- ordena por campo
+- cuenta
+- muestra
+- guarda "file.txt"
+- genera reporte
+
+English nouns for technical terms:
+target, port, host, payload, vuln, packet, interface, header, ports, subdomains, alive, severity, wordlist, reporte
+
+ASCII normalization:
+- NEVER use ñ, á, é, í, ó, ú in keywords — they are always ASCII
+- User identifiers CAN have diacritics (the normalizer handles them)
+- ñ → nh, á → a, é → e, í → i, ó → o, ú → u
+```
+
+---
+
+## Complete Keyword Reference
 
 ### Control flow
 | Keyword | Meaning | Python equivalent |
@@ -33,39 +82,34 @@ Habla is indentation-based (like Python). Pipes (`->`) connect sequential operat
 | Keyword | Meaning | Python equivalent |
 |---------|---------|------------------|
 | `muestra` | print | `print()` |
-| `lee` | read file | `open().read()` |
-| `guarda X en "f"` | write file | `open("f","w").write()` |
+| `lee "f"` | read file | `open("f").read()` |
+| `guarda X en "f"` | write file | `open("f","w").write(X)` |
 | `desde "url"` | HTTP GET | `requests.get(url).json()` |
 | `filtra donde cond` | filter | `[x for x in ... if cond]` |
 | `ordena por campo` | sort | `sorted(..., key=...)` |
 | `cuenta X` | count/length | `len(X)` |
 
 ### Cybersecurity
-| Keyword | Meaning |
-|---------|---------|
-| `escanea target "ip" en ports [...]` | Port scan |
-| `busca subdomains de "dom"` | Subdomain enumeration |
-| `captura packets en interface "eth0"` | Packet capture |
-| `ataca ssh en target con wordlist "f"` | Brute force |
-| `analiza headers de "url"` | HTTP header analysis |
-| `genera reporte con datos` | Generate report |
+| Keyword | Meaning | Python module |
+|---------|---------|--------------|
+| `escanea target X en ports [...]` | Port scan | `habla.cybersec.scanner` |
+| `busca subdomains de X` | Subdomain enum | `habla.cybersec.recon` |
+| `busca vulns en target` | Vuln search | `habla.cybersec.analysis` |
+| `captura packets en interface X` | Packet capture | `habla.cybersec.capture` |
+| `ataca "service" en target con wordlist "f"` | Brute force | `habla.cybersec.attack` |
+| `analiza headers de X` | Security analysis | `habla.cybersec.analysis` |
+| `genera reporte con datos` | Report generation | `habla.cybersec.report` |
 
 ### Logic operators
-| Habla | Python |
-|-------|--------|
-| `y` | `and` |
-| `o` | `or` |
-| `no` | `not` |
-| `es` | `==` |
-| `cierto` | `True` |
-| `falso` | `False` |
-| `nulo` | `None` |
-
-### Pipe operator
-`->` connects sequential operations:
-```
-datos -> filtra donde x > 0 -> ordena por nombre -> guarda "out.txt"
-```
+| Habla | Python | Go | C | Rust |
+|-------|--------|-----|---|------|
+| `y` | `and` | `&&` | `&&` | `&&` |
+| `o` | `or` | `\|\|` | `\|\|` | `\|\|` |
+| `no` | `not` | `!` | `!` | `!` |
+| `es` | `==` | `==` | `==` | `==` |
+| `cierto` | `True` | `true` | `1` | `true` |
+| `falso` | `False` | `false` | `0` | `false` |
+| `nulo` | `None` | `nil` | `NULL` | `None` |
 
 ---
 
@@ -76,12 +120,14 @@ datos -> filtra donde x > 0 -> ordena por nombre -> guarda "out.txt"
 nombre = "Carlos"
 edad = 25
 activo = cierto
+lista = [1, 2, 3]
 ```
 
 ### 2. Print / display
 ```habla
 muestra "Hola mundo"
 muestra "Usuario: " + nombre
+muestra "Total: " + cuenta lista
 ```
 
 ### 3. Conditional
@@ -94,7 +140,7 @@ sino
 
 ### 4. For loop
 ```habla
-para cada item en lista
+para item en lista
   muestra item
 ```
 
@@ -115,16 +161,16 @@ datos = desde "https://api.ejemplo.com/users"
 escanea target "192.168.1.1" en ports [22, 80, 443]
 ```
 
-### 8. Subdomain recon
+### 8. Subdomain recon with assignment
 ```habla
 subs = busca subdomains de "ejemplo.com"
-para cada s en subs
+para s en subs
   muestra s
 ```
 
 ### 9. Pipe chain
 ```habla
-resultado = "192.168.1.0/24" -> escanea ports [80, 443] -> filtra donde open
+busca subdomains de "target.com" -> filtra alive -> genera reporte
 ```
 
 ### 10. Save results
@@ -134,51 +180,75 @@ guarda resultados en "output.txt"
 
 ---
 
-## Anti-patterns (what NOT to do)
+## Anti-patterns (what NOT to generate)
 
 ```python
-# INCORRECTO — no uses imports
+# WRONG — no imports
 import requests
 
-# INCORRECTO — no uses llaves
+# WRONG — no braces
 if (x > 0) {
   print(x)
 }
 
-# INCORRECTO — no uses async/await
+# WRONG — no async/await
 async def fetch():
   data = await requests.get(url)
 
-# INCORRECTO — no uses type annotations
+# WRONG — no type annotations
 def scan(target: str, ports: List[int]) -> dict:
 
-# INCORRECTO — no uses ñ, tildes, o signos invertidos en KEYWORDS
-función = 42    # usa: funcion = 42
-año = 2026      # usa: anho = 2026 o simplemente year = 2026
+# WRONG — no diacritics in keywords
+función = 42    # correct: fn nombre()
+señal = "ok"    # correct: senhal = "ok" (or just signal = "ok")
+
+# WRONG — no semicolons
+muestra "hola";
+
+# WRONG — no parentheses on control flow
+si (x > 0)      # correct: si x > 0
+
+# WRONG — no print() — use muestra
+print("hola")   # correct: muestra "hola"
+
+# WRONG — no def — use fn
+def my_func():  # correct: fn my_func()
+
+# WRONG — no return — use devuelve
+return x        # correct: devuelve x
 ```
 
 ---
 
-## System Prompt Template
+## Critical rules for reliable generation
 
-Copy this into your system prompt to enable Habla code generation:
+1. **Every token must carry meaning.** No boilerplate, no ceremony.
+2. **Cyber constructs need no imports.** The transpiler auto-injects them.
+3. **Use `cuenta X` not `len(X)`.** Habla wraps Python builtins.
+4. **String concat with `+`.** The transpiler wraps variables in `str()`.
+5. **`para X en Y` not `for X in Y`.** All control flow is in Spanish.
+6. **`guarda X en "file"` not `save(X, "file")`.** File I/O is a keyword.
+7. **Indentation is 2 spaces.** Consistent. No tabs-vs-spaces ambiguity.
+8. **`busca subdomains de X` works in assignments.** `subs = busca subdomains de domain` is valid.
+9. **`cuenta X` works in expressions.** `muestra "Total: " + cuenta lista` is valid.
+10. **`->` pipes left to right.** Each step receives the previous output.
 
-```
-You are an expert in Habla, a cybersecurity DSL that transpiles to Python, C, and Rust.
+---
 
-Rules for generating Habla code:
-- Use Spanish verbs for actions: muestra, filtra, escanea, busca, captura, ataca, analiza, genera
-- Use English nouns for tech terms: target, port, host, payload, vuln, packet, interface, header
-- Use -> for pipes: datos -> filtra donde x > 0 -> guarda "out.txt"
-- No imports, no curly braces, no async/await, no type annotations
-- Indentation-based blocks (2 spaces or 1 tab)
-- ASCII only in keywords: no tildes (á,é,í,ó,ú), no ñ, no ¿ or ¡
-- Booleans: cierto / falso. Logic: y / o / no. Null: nulo
-- Keep it minimal: every token must carry meaning
-- For loops: para cada X en lista OR para X en lista
-- HTTP GET: datos = desde "url"
-- Cybersec constructs need no imports — the transpiler handles them
-```
+## Generation checklist
+
+Before outputting Habla code, verify:
+
+- [ ] No imports at the top
+- [ ] No type annotations anywhere
+- [ ] No curly braces (blocks are indentation-based)
+- [ ] No parentheses around `si`/`mientras` conditions
+- [ ] All control flow keywords are Spanish (`si`, `para`, `fn`, etc.)
+- [ ] Technical nouns are English (`target`, `ports`, `interface`, etc.)
+- [ ] No diacritics in keywords (`muestra` not `müestra`)
+- [ ] String concatenation uses `+`
+- [ ] Cyber verbs used directly (no function call syntax)
+- [ ] Comments use `//` not `#`
 
 ---
 
@@ -193,4 +263,4 @@ The parser automatically normalizes these — both forms are valid in identifier
 | `ü` | `u` |
 | `¿, ¡` | (ignored) |
 
-**KEYWORDS are always ASCII.** The language was designed ASCII-first so LLMs never need to guess whether to use tildes in keywords.
+**KEYWORDS are always ASCII.** The language was designed ASCII-first so LLMs never need to guess whether to use tildes.

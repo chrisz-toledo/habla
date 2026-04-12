@@ -12,7 +12,7 @@ requires-python = ">=3.9"
 authors = [
     {name = "Christian Toledo"}
 ]
-keywords = ["cybersecurity", "dsl", "programming-language", "ai", "transpiler", "python", "c", "rust"]
+keywords = ["cybersecurity", "dsl", "programming-language", "ai", "transpiler", "python", "go", "c", "rust"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

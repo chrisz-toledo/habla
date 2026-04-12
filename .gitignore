@@ -17,6 +17,7 @@ env/
 .coverage
 htmlcov/
 *.habla.py
+*.habla.go
 *.habla.c
 *.habla.rs
 .DS_Store
