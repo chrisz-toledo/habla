@@ -164,6 +164,10 @@ class Parser:
         if tok.type == TokenType.KEYWORD and tok.value == "analiza":
             return self._maybe_pipe_chain(self.parse_analiza())
 
+        # enumera
+        if tok.type == TokenType.KEYWORD and tok.value == "enumera":
+            return self._maybe_pipe_chain(self.parse_enumera())
+
         # Asignacion: IDENT = expr o keyword-como-variable = expr (lookahead)
         # Solo triggerea si el siguiente token es '=' (operador de asignacion, no '==')
         if (tok.type in (TokenType.IDENTIFIER, TokenType.KEYWORD)
@@ -495,6 +499,37 @@ class Parser:
         self._consume_newline()
         return ExpressionStatement(expr=CyberAnalyze(source=source, mode=mode, line=line), line=line)
 
+    def parse_enumera(self) -> ExpressionStatement:
+        line = self.current().line
+        self.expect(TokenType.KEYWORD, "enumera")
+
+        # modo: directories | files | endpoints
+        mode = "directories"
+        if self.current().value in ("directories", "files", "endpoints"):
+            mode = self.consume().value
+
+        # en target
+        if self.match_value("en"):
+            self.consume()
+        target = self.parse_primary()
+
+        wordlist = None
+        threads = None
+
+        # usando "wordlist.txt"
+        if self.match_value("usando"):
+            self.consume()
+            wordlist = self.parse_primary()
+
+        # con N hilos
+        if self.match_value("con") or self.match_value("threads"):
+            self.consume()
+            threads = self.parse_primary()
+
+        self._consume_newline()
+        node = CyberEnumerate(mode=mode, target=target, wordlist=wordlist, threads=threads, line=line)
+        return ExpressionStatement(expr=node, line=line)
+
     # ─── Expresiones ─────────────────────────────────────────────────────────
 
     def parse_expr(self) -> Node:
@@ -554,6 +589,21 @@ class Parser:
         # busca vulns
         if tok.type == TokenType.KEYWORD and tok.value == "busca":
             return self.parse_busca_inline()
+
+        # enumera directories en target
+        if tok.type == TokenType.KEYWORD and tok.value == "enumera":
+            self.consume()
+            mode = "directories"
+            if self.current().value in ("directories", "files", "endpoints"):
+                mode = self.consume().value
+            if self.match_value("en"):
+                self.consume()
+            target = self.parse_primary()
+            wordlist = None
+            if self.match_value("usando"):
+                self.consume()
+                wordlist = self.parse_primary()
+            return CyberEnumerate(mode=mode, target=target, wordlist=wordlist, line=tok.line)
 
         return self.parse_binary()
 
@@ -753,6 +803,24 @@ class Parser:
                 self.consume()
                 data = self.parse_primary()
             return GenerateReport(data=data, line=tok.line)
+
+        if tok.type == TokenType.KEYWORD and tok.value == "enumera":
+            self.consume()
+            mode = "directories"
+            if self.current().value in ("directories", "files", "endpoints"):
+                mode = self.consume().value
+            if self.match_value("en"):
+                self.consume()
+            target = self.parse_primary()
+            wordlist = None
+            threads = None
+            if self.match_value("usando"):
+                self.consume()
+                wordlist = self.parse_primary()
+            if self.match_value("con") or self.match_value("threads"):
+                self.consume()
+                threads = self.parse_primary()
+            return CyberEnumerate(mode=mode, target=target, wordlist=wordlist, threads=threads, line=tok.line)
 
         # Identifier o keyword usado como identifier
         if tok.type in (TokenType.IDENTIFIER, TokenType.KEYWORD):

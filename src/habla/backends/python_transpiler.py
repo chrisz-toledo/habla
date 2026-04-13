@@ -41,6 +41,7 @@ _HELPER_IMPORTS = {
     "b64_encode":       "from habla.cybersec.crypto import b64_encode as _habla_b64_encode",
     "b64_decode":       "from habla.cybersec.crypto import b64_decode as _habla_b64_decode",
     "generate_token":   "from habla.cybersec.crypto import generate_token as _habla_generate_token",
+    "fuzz":             "from habla.cybersec.fuzzer import fuzz as _habla_fuzz",
 }
 
 # Traduccion de operadores
@@ -217,6 +218,17 @@ class PythonTranspiler(BaseTranspiler):
         self.imports.need_helper("analyze")
         target = self._visit(node.target) if node.target else 'None'
         return f"_habla_analyze({target}, mode='vulns')"
+
+    def _visit_CyberEnumerate(self, node: CyberEnumerate) -> str:
+        self.imports.need_helper("fuzz")
+        target = self._visit(node.target) if node.target else 'None'
+        kwargs = [f"mode={node.mode!r}"]
+        if node.wordlist:
+            kwargs.append(f"wordlist={self._visit(node.wordlist)}")
+        if node.threads:
+            kwargs.append(f"threads={self._visit(node.threads)}")
+        kw_str = ", ".join(kwargs)
+        return f"_habla_fuzz({target}, {kw_str})"
 
     def _visit_GenerateReport(self, node: GenerateReport) -> str:
         self.imports.need_helper("report")

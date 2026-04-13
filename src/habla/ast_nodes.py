@@ -165,6 +165,15 @@ class CyberFindVulns(Node):
 
 
 @dataclass
+class CyberEnumerate(Node):
+    """enumera directories en target [usando wordlist]"""
+    mode: str = "directories"      # directories | files | endpoints
+    target: Optional[Node] = None
+    wordlist: Optional[Node] = None
+    threads: Optional[Node] = None
+
+
+@dataclass
 class GenerateReport(Node):
     """genera reporte con datos"""
     data: Optional[Node] = None

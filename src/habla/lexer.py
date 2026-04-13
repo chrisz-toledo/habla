@@ -47,7 +47,7 @@ KEYWORDS = frozenset({
     "filtra", "ordena", "agrupa", "cuenta", "suma",
     "crea", "borra", "actualiza", "envia",
     # Ciberseguridad
-    "escanea", "busca", "captura", "ataca", "intercepta", "analiza", "genera",
+    "escanea", "busca", "captura", "ataca", "intercepta", "analiza", "genera", "enumera",
     # Logica
     "cuando", "listos", "espera", "lanza", "atrapa",
     "es", "no", "y", "o", "de", "con", "sin", "como", "donde",

@@ -1,0 +1,14 @@
+# Calibracion Habla v0.2 - Version simplificada
+objetivo = "scanme.nmap.org"
+muestra "--- INICIANDO CALIBRACION V0.2 ---"
+
+# 1. Escaneo directo (Inferencia: ports)
+puertos = escanea objetivo
+muestra "Resultado del escaneo:" puertos
+
+# 2. Analisis directo (Inferencia: security_headers)
+cabeceras = analiza objetivo
+muestra "Analisis de cabeceras completado."
+
+# 3. Reporte consolidado
+genera report con puertos, cabeceras
