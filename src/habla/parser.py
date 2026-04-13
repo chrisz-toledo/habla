@@ -222,15 +222,21 @@ class Parser:
     def parse_fn_def(self) -> FunctionDef:
         line = self.current().line
         self.expect(TokenType.KEYWORD, "fn")
-        name_tok = self.expect(TokenType.IDENTIFIER)
-        name = name_tok.value
+        # El nombre puede ser IDENTIFIER o KEYWORD (ej: fn suma, fn cuenta)
+        if not self.match(TokenType.IDENTIFIER, TokenType.KEYWORD):
+            raise ParseError(
+                fmt("unexpected_token", token=self.current().value, line=line, suggestion="nombre de funcion"),
+                line, self.current().col, self.filename,
+            )
+        name = self.consume().value
 
-        # Params opcionales: fn nombre param1 param2
+        # Params opcionales: fn nombre(a, b) o fn nombre a b
         params = []
         if self.match(TokenType.LPAREN):
             self.consume()
             while not self.match(TokenType.RPAREN, TokenType.EOF):
-                if self.match(TokenType.IDENTIFIER):
+                # Los params pueden ser IDENTIFIER o KEYWORD (ej: a, en, de)
+                if self.match(TokenType.IDENTIFIER, TokenType.KEYWORD):
                     params.append(self.consume().value)
                 elif self.match(TokenType.COMMA):
                     self.consume()
@@ -239,8 +245,8 @@ class Parser:
             if self.match(TokenType.RPAREN):
                 self.consume()
         else:
-            # Params sin parentesis: fn nombre a b c
-            while self.match(TokenType.IDENTIFIER) and not self.match(TokenType.NEWLINE):
+            # Params sin paréntesis: fn nombre a b c
+            while self.match(TokenType.IDENTIFIER, TokenType.KEYWORD) and not self.match(TokenType.NEWLINE):
                 params.append(self.consume().value)
 
         self.skip_newlines()
