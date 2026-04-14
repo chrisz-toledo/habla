@@ -131,3 +131,6 @@ def _brute_ftp(host: str, username: str, passwords: List[str]) -> dict:
             break
 
     return {"success": False, "credential": None, "attempts": len(passwords)}
+
+# Alias para compatibilidad con spec de Fase 3
+brute_force = attack
