@@ -249,10 +249,12 @@ class TestGoBackend:
         code = go('muestra "test"')
         assert "func main()" in code
 
-    def test_cyber_scan_generates_stub(self):
+    def test_cyber_scan_generates_real_code(self):
+        # Fase 4: ya no genera stub — genera codigo real con goroutines
         code = go('escanea target "127.0.0.1" en ports [22, 80]\n')
-        # El stub debe contener comentarios orientativos
-        assert "nmap" in code or "TODO" in code or "Go v0.3" in code
+        assert "hado_scan(" in code
+        assert "func hado_scan(" in code
+        assert "sync.WaitGroup" in code
 
     def test_logical_operators_go(self):
         code = go("si x > 0 y y < 10\n  muestra x\n")
@@ -264,7 +266,7 @@ class TestGoBackend:
         assert "go" in TARGETS
         assert "rust" in TARGETS
         assert "c" in TARGETS
-        assert TARGETS["go"]["status"] == "stub"
+        assert TARGETS["go"]["status"] == "funcional"
         assert TARGETS["python"]["status"] == "funcional"
 
     def test_base_backend_interface(self):

@@ -1,7 +1,7 @@
 """Tests para el normalizador de caracteres ASCII."""
 
 import pytest
-from habla.normalizer import normalize
+from hado.normalizer import normalize
 
 
 def test_basic_substitutions():
