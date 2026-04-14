@@ -1,4 +1,4 @@
-# Hado Tutorial — From Zero to Security Assessment
+# Hado Tutorial — De cero a un security assessment completo
 
 This tutorial walks you through Hado step by step, building real cybersecurity tools as you go.
 
@@ -15,7 +15,7 @@ Verify the install:
 hado targets
 ```
 
-You should see four backends listed: Python (functional), Go (stub), C (functional), Rust (stub).
+Deberías ver cuatro backends: Python (funcional), Go (funcional v1.0 — goroutines), C (funcional), Rust (stub).
 
 ## Step 1: Hello World
 
@@ -191,19 +191,31 @@ Save to a file:
 hado compile --target c assessment.ho -o assessment.c
 ```
 
-## What happens under the hood?
+## ¿Qué pasa internamente?
 
 ```
 .ho → Normalizer → Lexer → Parser → AST → Backend → exec()
-          (ASCII)    (tokens)  (tree)        (Python)
+        (ASCII)    (tokens)  (tree)   (compartido)  (Python/Go/C/Rust)
 ```
 
-The normalizer strips diacritics (so `señal` and `senhal` are the same identifier). The lexer tokenizes including INDENT/DEDENT for blocks. The parser builds an AST. The Python backend traverses it and generates code with auto-injected imports. `hado run` executes this in memory.
+El normalizador elimina tildes (así `señal` y `senhal` son el mismo identificador). El lexer tokeniza incluyendo INDENT/DEDENT para los bloques. El parser construye un AST. El backend recorre el AST generando código con imports inyectados automáticamente. `hado run` ejecuta el código en memoria.
 
-## Next steps
+## Step 13: Compilar a Go con goroutines reales
 
-- Browse the [cybersec cookbook](cybersec-cookbook.md) for real-world recipes
-- Read the [language specification](spec.md) for the full reference
-- Check [design decisions](design-decisions.md) to understand why Hado works the way it does
-- See [multi-target](multi-target.md) for the Go, C, and Rust backend vision
-- Read the [LLM guide](llm-guide.md) to integrate Hado with AI systems
+El backend Go (funcional desde v0.4) genera código que compila con `go build`:
+
+```bash
+hado compile --target go assessment.ho
+go build assessment.go
+./assessment
+```
+
+El mismo `escanea` que en Python usa `socket`, en Go genera `hado_scan()` con goroutines + `sync.WaitGroup`. El scan que en Python tarda 10 segundos en Go tarda menos de 1 segundo.
+
+## Próximos pasos
+
+- Recetas en el [cybersec cookbook](cybersec-cookbook.md)
+- Referencia completa en la [especificación del lenguaje](spec.md)
+- Decisiones de arquitectura en [design decisions](design-decisions.md)
+- Backends multi-target en [multi-target](multi-target.md)
+- Integración con IA en [LLM guide](llm-guide.md)

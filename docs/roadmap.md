@@ -11,12 +11,12 @@
 Antes de construir, entender lo que se está construyendo como sistema.
 
 ### Stocks (lo que se acumula)
-| Stock | Estado actual | Objetivo v1.0 |
+| Stock | Estado actual (v0.4) | Objetivo v1.0 |
 |---|---|---|
 | AST node types | ~35 nodos | ~50 nodos |
-| Backend implementations | 1 real (Python), 3 stubs | 4 reales |
-| Test coverage | 117 tests | 400+ tests |
-| Módulos cybersec | 5 (scanner, analysis, report, crypto, recon) | 12+ |
+| Backend implementations | 3 reales (Python, Go, C), 1 stub (Rust) | 4 reales |
+| Test coverage | 188 tests | 400+ tests |
+| Módulos cybersec | 7 (scanner, analysis, report, crypto, recon, attack, fuzzer) | 12+ |
 | Keywords del lenguaje | 40 | ~55 |
 | Ejemplos funcionales | 7 | 20+ |
 
@@ -52,27 +52,25 @@ La arquitectura `AST → múltiples backends` es inherentemente resiliente: si u
 
 ---
 
-## Estado Actual: v0.2 ✅
+## Estado Actual: v0.4 ✅
 
-**Lo que funciona en producción (verificado 2026-04-12):**
-- Lexer completo: `#` comments, `|` pipes, todos los tokens
-- Parser: todos los verbos cyber, comma-args, `escanea ports de target`
-- Python backend: `scanner.py`, `analysis.py`, `report.py`, `crypto.py`, `recon.py`
-- Pipe chains en nivel de statement (`busca X | filtra Y | muestra`)
-- `genera report con a, b, c` (multi-arg)
-- 117/117 tests pasando
+**Lo que funciona en producción (verificado 2026-04-14):**
+- Lexer completo: comments `//`, pipes `->`, todos los tokens
+- Parser: todos los verbos cyber, comma-args, multi-arg muestra
+- Python backend: `scanner.py`, `analysis.py`, `report.py`, `crypto.py`, `recon.py`, `attack.py`, `fuzzer.py`
+- Go backend: genera código Go compilable con goroutines reales (`sync.WaitGroup` + `net.DialTimeout`)
+- C backend: genera código C con `#include` automáticos y `main()` funcional
+- Pipe chains funcionales en todos los backends
+- 188/188 tests pasando
 
 **Lo que aún son stubs:**
-- Go backend: genera código placeholder no compilable
-- Rust backend: genera código placeholder no compilable
-- C backend: genera código placeholder no compilable
-- `captura packets` (en Python): lógica real falta
-- `ataca` (brute force): lógica real falta
-- `enumera directories` (fuzzer): keyword no existe aún
+- Rust backend: genera código placeholder (Fase 5)
+- `captura packets` en Go/Rust/C: requieren librerías externas
+- `ataca` brute force en Go: requiere `golang.org/x/crypto/ssh` externo
 
 ---
 
-## Fase 3 — Python Backend Completo (v0.3)
+## ✅ Fase 3 — Python Backend Completo (v0.3) — COMPLETADA
 
 > **Filosofía de sistemas**: Antes de construir más backends, maximizar el stock del backend Python. Un backend al 100% es más valioso que 4 backends al 25%.
 
@@ -180,7 +178,7 @@ CONDICION DE RECHAZO: Si cualquier verificación falla →
 
 ---
 
-## Fase 4 — Go Backend Real (v0.4)
+## ✅ Fase 4 — Go Backend Real (v0.4) — COMPLETADA
 
 > **Filosofía de sistemas**: El backend Go no es una copia del Python. Tiene un modelo mental diferente (concurrencia, canales, goroutines). Diseñarlo para ese modelo, no para simular Python.
 
@@ -592,16 +590,18 @@ grep -c "^import\|^from" out.py  # Hado lo genera, el usuario no lo escribe
 
 ## Resumen de Fases
 
-| Fase | Version | Enfoque | Leverage Point |
-|---|---|---|---|
-| ✅ 1 | v0.1 | Core compiler, Python backend | AST + Lexer |
-| ✅ 2 | v0.2 | Lexer/parser fixes, módulos reales | Parser robusto |
-| 🔄 3 | v0.3 | Python completo (capture, attack, fuzzer) | Módulos backend |
-| ⏳ 4 | v0.4 | Go backend real + goroutines | Concurrencia |
-| ⏳ 5 | v0.5 | Rust backend real + memory safety | Safety |
-| ⏳ 6 | v0.6 | C backend real + libpcap | Kernel/exploit |
-| ⏳ 7 | v0.7 | Módulos, multi-return, error handling | Extensibilidad |
-| ⏳ 8 | v0.8 | Tooling: compile, check, fmt, VS Code | UX |
-| ⏳ — | v1.0 | Todos los backends + 300+ tests + docs | Ecosistema |
+| Fase | Version | Estado | Enfoque | Leverage Point |
+|---|---|---|---|---|
+| 1 | v0.1 | ✅ Completa | Core compiler, Python backend | AST + Lexer |
+| 2 | v0.2 | ✅ Completa | Lexer/parser robusto, módulos reales | Parser robusto |
+| 3 | v0.3 | ✅ Completa | Python completo (capture, attack, fuzzer) | Módulos backend |
+| 4 | v0.4 | ✅ Completa | Go backend real + goroutines (188 tests) | Concurrencia |
+| 5 | v0.5 | ⏳ Próxima | Rust backend real + memory safety | Safety |
+| 6 | v0.6 | ⏳ | C backend mejorado + libpcap | Kernel/exploit |
+| 7 | v0.7 | ⏳ | Módulos, multi-return, error handling | Extensibilidad |
+| 8 | v0.8 | ⏳ | Tooling: compile, check, fmt, VS Code | UX |
+| — | v1.0 | ⏳ | Todos los backends + 300+ tests + ecosistema | Comunidad |
 
 **Regla del sistema**: no saltarse fases. Cada fase es el stock que alimenta el siguiente.
+
+**Regla de doc-sync**: cada fase completada actualiza README.md, spec.md, tutorial.md y este roadmap en el mismo commit. La documentación desactualizada es un bug.

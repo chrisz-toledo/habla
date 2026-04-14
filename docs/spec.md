@@ -1,4 +1,4 @@
-# Hado Language Specification v0.1.0
+# Hado Language Specification v0.4.0
 
 Hado is a cybersecurity DSL that transpiles to Python, Go, C, and Rust. This is the formal language specification.
 
@@ -310,17 +310,56 @@ hado compile --target c script.ho       # C
 hado compile --target rust script.ho    # Rust
 hado run script.ho                      # Execute via Python
 hado run --target go script.ho          # Show generated Go
-hado targets                               # List all backends
+hado targets                            # List all backends
 ```
 
-Backend status (v0.1):
+Backend status (v0.4 — actualizado Fase 4):
 
-| Target | Status | Use case |
-|--------|--------|----------|
-| Python | Functional | Scripting, OSINT, automation |
-| Go | Stub | Concurrent scanners, standalone binaries |
-| C | Functional | Exploits, shellcode, kernel modules |
-| Rust | Stub | Fuzzing, parsers, memory-safe tools |
+| Target | Status | Version | Use case |
+|--------|--------|---------|----------|
+| Python | ✅ Functional | 0.1 | Scripting, OSINT, automation |
+| Go     | ✅ Functional | 1.0 | Concurrent scanners, standalone binaries, goroutines |
+| C      | ✅ Functional | 0.1 | Exploits, shellcode, kernel modules |
+| Rust   | 🔄 Stub | 0.1 | Fuzzing, parsers, memory-safe tools |
+
+### Go backend — goroutines automáticas (v1.0)
+
+`escanea target "ip" en ports [22, 80, 443]` en Go genera:
+
+```go
+func hado_scan(target string, ports []int) []int {
+    var mu sync.Mutex
+    var wg sync.WaitGroup
+    var abiertos []int
+    for _, port := range ports {
+        wg.Add(1)
+        go func(p int) {
+            defer wg.Done()
+            addr := fmt.Sprintf("%s:%d", target, p)
+            conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+            if err == nil {
+                conn.Close()
+                mu.Lock()
+                abiertos = append(abiertos, p)
+                mu.Unlock()
+            }
+        }(port)
+    }
+    wg.Wait()
+    return abiertos
+}
+```
+
+Solo stdlib de Go — cero dependencias externas. El mismo código Hado que en Python escanea en secuencia, en Go escanea todos los puertos en paralelo con goroutines.
+
+### Declaración de variables en Go
+
+Go requiere `:=` para la primera declaración y `=` para reasignación. El transpiler lo maneja automáticamente:
+
+```hado
+x = 5      // → x := 5  (primera declaración)
+x = 10     // → x = 10  (reasignación)
+```
 
 ## 9. AST node catalog (31 node types)
 

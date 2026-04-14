@@ -1,22 +1,22 @@
-# Habla
+# Hado
 
-**A cybersecurity DSL designed for AI-native code generation. Spanish verbs. English nouns. Zero boilerplate.**
+**Un DSL de ciberseguridad diseñado para generación de código con IA. Verbos en español. Sustantivos en inglés. Cero boilerplate.**
 
-```habla
-# 3 lines. No imports. Real output.
-scan    = escanea target en ports [80, 443, 22, 3306]
-headers = analiza headers de target
-genera report con scan, headers
+```hado
+// 3 líneas. Sin imports. Output real.
+scan    = escanea target "192.168.1.1" en ports [80, 443, 22, 3306]
+headers = analiza headers de "https://example.com"
+genera reporte con scan, headers
 ```
 
-> **Status: v0.2 — Python backend fully functional. Verified on production targets.**  
-> 117 tests passing · Go/Rust/C backends in development · [Roadmap](docs/roadmap.md)
+> **Estado: v0.4 — Python ✅ funcional · Go ✅ funcional (goroutines, stdlib) · C ✅ funcional · Rust stub**
+> 188 tests · [Roadmap](docs/roadmap.md)
 
 ---
 
-## Proof: This Works in Production
+## Prueba real: esto funciona en producción
 
-On 2026-04-12, the script above was run against a real production server. Output:
+El script anterior fue ejecutado contra un servidor de producción real el 2026-04-12. Output:
 
 ```
 [1/3] Escaneando puertos...
@@ -28,35 +28,39 @@ On 2026-04-12, the script above was run against a real production server. Output
 [3/3] Generando reporte...
 ```
 
-3 lines of Habla. Zero `import` statements written. Real nmap scan. Real HTTP header analysis. Real JSON report.
+3 líneas de Hado. Cero `import` escritos por el usuario. Scan nmap real. Análisis de headers HTTP real. Reporte JSON real.
 
-→ [Full evidence and findings](docs/evidence/v0.2-proof-of-concept.md)
-
----
-
-## What is Habla?
-
-Habla is a domain-specific language for cybersecurity that transpiles to **Python, Go, C, and Rust**. It is designed so that LLMs (Claude, GPT, Gemini) can write cybersecurity code more efficiently, more cheaply, and with fewer errors. The user writes 12 tokens in Habla — the transpiler generates 45+ tokens of executable code.
-
-Habla is not a general-purpose language competing with Python. It is a **multi-target DSL**: the same Habla code compiles to Python for rapid prototyping, Go for concurrent scanners, Rust for memory-safe tools, and C for exploits and kernel-level work.
-
-### Backend Status
-
-| Target | Status | Use Case |
-|--------|--------|----------|
-| Python | ✅ **Functional** | Scripting, OSINT, rapid prototyping |
-| Go | 🔄 Stub → v0.4 | Concurrent scanners, standalone binaries |
-| Rust | 🔄 Stub → v0.5 | Memory-safe tools, fuzzing, parsers |
-| C | 🔄 Stub → v0.6 | Exploits, kernel modules, libpcap |
+→ [Evidencia completa](docs/evidence/v0.2-proof-of-concept.md)
 
 ---
 
-## Why Habla?
+## ¿Qué es Hado?
 
-The problem: LLMs waste tokens on boilerplate.
+Hado es un lenguaje de dominio específico para ciberseguridad que transpila a **Python, Go, C y Rust**. Está diseñado para que los LLMs (Claude, GPT, Gemini) puedan escribir código de ciberseguridad de forma más eficiente, más económica y con menos errores.
+
+El usuario escribe 12 tokens en Hado — el transpiler genera 45+ tokens de código ejecutable con imports, manejo de errores y boilerplate incluido.
+
+Hado no compite con Python como lenguaje de propósito general. Es un **DSL multi-target**: el mismo código Hado compila a Python para prototipado rápido, Go para scanners concurrentes con goroutines, Rust para herramientas memory-safe, y C para exploits y trabajo a nivel de kernel.
+
+### Estado de los backends
+
+| Target | Estado | Versión | Caso de uso |
+|--------|--------|---------|-------------|
+| Python | ✅ **Funcional** | 0.1 | Scripting, OSINT, prototipado rápido |
+| Go     | ✅ **Funcional** | 1.0 | Scanners concurrentes, binarios standalone |
+| C      | ✅ **Funcional** | 0.1 | Exploits, shellcode, módulos de kernel |
+| Rust   | 🔄 **Stub** | 0.1 | Herramientas memory-safe, fuzzing, parsers |
+
+**Go v1.0**: `escanea` genera goroutines reales con `sync.WaitGroup` + `net.DialTimeout`. Solo stdlib — cero dependencias externas.
+
+---
+
+## Por qué Hado
+
+El problema: los LLMs desperdician tokens en boilerplate.
 
 ```python
-# Python: 47 tokens to scan a host
+# Python: 47 tokens para escanear un host
 import socket
 results = {}
 for port in [22, 80, 443]:
@@ -66,102 +70,117 @@ for port in [22, 80, 443]:
     s.close()
 ```
 
-```habla
-# Habla: 8 tokens
+```hado
+# Hado: 8 tokens
 escanea target "192.168.1.1" en ports [22, 80, 443]
 ```
 
-The solution: a language where every token carries maximum semantic meaning. No imports, no ceremony, no boilerplate.
+La solución: un lenguaje donde cada token lleva el máximo significado semántico. Sin imports, sin ceremonia, sin boilerplate.
 
 ---
 
 ## Quick Start
 
 ```bash
-pip install habla-lang
+git clone https://github.com/chrisz-toledo/hado.git
+cd hado
+pip install -e .
 ```
 
-Create `hello.ho`:
-```habla
-muestra "Hola mundo desde Habla!"
+Crea `hello.ho`:
+```hado
+muestra "Hola mundo desde Hado!"
 
 nombre = "Christian"
 muestra "Bienvenido, " + nombre
 ```
 
-Run it:
+Ejecuta:
 ```bash
 hado run hello.ho
 ```
 
+Ver código generado:
+```bash
+hado compile hello.ho                  # Python (default)
+hado compile --target go hello.ho      # Go
+hado compile --target c hello.ho       # C
+hado compile --target rust hello.ho    # Rust
+hado targets                           # Lista todos los backends
+```
+
 ---
 
-## Language Overview
+## Resumen del lenguaje
 
-### 1. Zero boilerplate
-No imports, no requires, no decorators. The transpiler resolves dependencies from context.
+### 1. Cero boilerplate
+Sin imports, sin requires, sin decoradores. El transpiler resuelve las dependencias por contexto.
 
-```habla
-// Sin imports — el transpiler los inyecta automaticamente
-datos = desde "https://api.github.com/repos/chrisz-toledo/habla"
+```hado
+// Sin imports — el transpiler los inyecta automáticamente
+datos = desde "https://api.github.com/repos/chrisz-toledo/hado"
 muestra datos
 ```
 
-### 2. Spanish verbs as operators
-```habla
-muestra "resultado"          // print
-filtra donde x > 0          // filter
-escanea target en ports [...] // port scan
-busca subdomains de "dom"    // subdomain recon
-captura packets en "eth0"    // packet capture
+### 2. Verbos españoles como operadores
+```hado
+muestra "resultado"              // print
+filtra donde x > 0               // filter
+escanea target en ports [...]    // port scan
+busca subdomains de "dom"        // subdomain recon
+captura packets en "eth0"        // packet capture
+analiza headers de "url"         // security header analysis
+genera reporte con datos         // report generation
 ```
 
-### 3. Pipes connect everything
-```habla
+### 3. Pipes conectan todo
+```hado
 "target.com" -> busca subdomains -> filtra alive -> escanea ports [80, 443] -> genera reporte
 ```
 
-### 4. Implicit types
-```habla
+### 4. Tipos implícitos
+```hado
 nombre = "Carlos"      // str
 edad   = 25            // int
-activo = cierto        // bool
+activo = cierto        // bool (true)
 datos  = desde "url"   // dict (HTTP JSON)
+ports  = [22, 80, 443] // list
 ```
 
-### 5. Indentation-based blocks
-```habla
+### 5. Bloques por indentación
+```hado
 si edad >= 18
   muestra "adulto"
 sino
   muestra "menor"
 ```
 
-### 6. English nouns for technical terms
-Technical cybersecurity terms stay in English (CVEs, protocols, tools are always in English):
-```habla
-// Spanish verbs + English nouns
+### 6. Sustantivos técnicos en inglés
+Los términos de ciberseguridad se mantienen en inglés (CVEs, protocolos, herramientas siempre son en inglés):
+```hado
+// Verbos españoles + sustantivos ingleses
 escanea target "192.168.1.1" en ports [22, 80, 443]
 busca subdomains de "example.com"
 captura packets en interface "eth0"
+ataca "ssh" en target con wordlist "rockyou.txt"
 ```
 
-### 7. Four compilation targets
+### 7. Cuatro targets de compilación
 ```bash
-hado compile script.ho               # Python (default)
-hado compile --target go script.ho   # Go  (go build)
-hado compile --target c script.ho    # C   (gcc/clang)
-hado compile --target rust script.ho # Rust (rustc/cargo)
-hado run script.ho                   # Execute via Python
-habla targets                            # List all backends and their status
+hado compile script.ho                # Python (default)
+hado compile --target go script.ho    # Go  (go build)
+hado compile --target c script.ho     # C   (gcc/clang)
+hado compile --target rust script.ho  # Rust (rustc/cargo)
+hado run script.ho                    # Ejecutar via Python
+hado targets                          # Lista backends y estado
 ```
 
 ---
 
-## Cybersecurity Examples
+## Ejemplos de ciberseguridad
 
-### Recon pipeline
-```habla
+### Pipeline de recon
+```hado
 dominio = "target.com"
 
 // Subdominios vivos
@@ -175,26 +194,26 @@ para cada sub en subs
 genera reporte con subs -> guarda "recon-report.md"
 ```
 
-### Security header analysis
-```habla
+### Análisis de seguridad web
+```hado
 url = "https://example.com"
-respuesta = desde url
-muestra "Analizando headers de " + url
 analiza headers de url
 ```
 
-### Brute force (authorized environments only)
-```habla
-// Solo usar en entornos propios o con permiso explicito
+Verifica los 9 headers de seguridad (HSTS, CSP, X-Frame-Options, etc.) y retorna una calificación A–F.
+
+### Brute force (solo entornos autorizados)
+```hado
+// Solo usar en sistemas propios o con permiso explícito
 ataca "ssh" en "192.168.1.100" con wordlist "rockyou.txt"
 ```
 
-### Full OSINT assessment
-```habla
+### Assessment OSINT completo
+```hado
 fn osint(objetivo)
   muestra "=== OSINT: " + objetivo + " ==="
 
-  subs = busca subdomains de objetivo -> filtra alive
+  subs = busca subdomains de objetivo
   muestra "Subdominios: " + cuenta subs
 
   para cada sub en subs
@@ -206,61 +225,69 @@ fn osint(objetivo)
 osint("target.com")
 ```
 
+### Lo mismo en Go — concurrencia automática
+```bash
+hado compile --target go assessment.ho
+go build assessment.go
+./assessment
+```
+
+El backend Go genera `hado_scan()` con goroutines y `sync.WaitGroup`. El mismo código Hado que en Python escanea en secuencia, en Go escanea todos los puertos en paralelo automáticamente.
+
 ---
 
-## ASCII-first Design
+## Diseño ASCII-first
 
-Habla solves three problems with Spanish diacritics in programming:
+Hado resuelve tres problemas con las tildes españolas en programación:
 
-1. **Keyboard accessibility** — ñ, á, é don't exist on most keyboards
-2. **LLM tokenization cost** — diacritics tokenize as 2-3 tokens instead of 1
-3. **LLM generation errors** — LLMs frequently omit diacritics
+1. **Accesibilidad de teclado** — ñ, á, é no existen en la mayoría de teclados
+2. **Costo de tokenización para LLMs** — las tildes se tokenizan como 2–3 tokens en lugar de 1
+3. **Errores de generación de LLMs** — los LLMs frecuentemente omiten tildes
 
-**Solution**: Keywords are always ASCII. The normalizer handles user identifiers transparently.
+**Solución**: los keywords siempre son ASCII. El normalizador maneja los identificadores del usuario de forma transparente.
 
-| With diacritic | ASCII form | Both are valid |
-|---------------|-----------|----------------|
-| `año` | `anho` or `anio` | ✓ |
+| Con tilde | Forma ASCII | Ambas son válidas |
+|-----------|------------|-------------------|
+| `año`     | `anho` o `anio` | ✓ |
 | `función` | `funcion` | ✓ |
 | `también` | `tambien` | ✓ |
-| `¿qué pasa?` | `que pasa?` | ✓ |
 
-String literals are **never** normalized — `muestra "Año nuevo"` preserves the string exactly.
-
----
-
-## For LLM Developers
-
-Use this system prompt to enable Habla generation in your AI application:
-
-```
-You are an expert in Habla, a cybersecurity DSL that transpiles to Python, Go, C, and Rust.
-
-Rules for generating Habla code:
-- Use Spanish verbs for actions: muestra, filtra, escanea, busca, captura, ataca, analiza, genera
-- Use English nouns for tech terms: target, port, host, payload, vuln, packet, interface, header
-- Use -> for pipes: datos -> filtra donde x > 0 -> guarda "out.txt"
-- No imports, no curly braces, no async/await, no type annotations
-- Indentation-based blocks (2 spaces or 1 tab)
-- ASCII only: no tildes (á,é,í,ó,ú), no ñ, no ¿ or ¡
-- Booleans: cierto/falso. Logic: y/o/no. Null: nulo
-- Keep it minimal: every token must carry meaning
-```
-
-See [docs/llm-guide.md](docs/llm-guide.md) for the complete guide including all keywords, common patterns, and anti-patterns.
+Los string literals **nunca** se normalizan — `muestra "Año nuevo"` preserva el string exactamente.
 
 ---
 
-## Architecture
+## Para desarrolladores LLM
+
+Usa este system prompt para habilitar la generación de Hado en tu aplicación de IA:
+
+```
+Eres un experto en Hado, un DSL de ciberseguridad que transpila a Python, Go, C y Rust.
+
+Reglas para generar código Hado:
+- Verbos españoles para acciones: muestra, filtra, escanea, busca, captura, ataca, analiza, genera
+- Sustantivos ingleses para términos técnicos: target, port, host, payload, vuln, packet, interface, header
+- -> para pipes: datos -> filtra donde x > 0 -> guarda "out.txt"
+- Sin imports, sin llaves, sin async/await, sin type annotations
+- Bloques por indentación (2 espacios o 1 tab)
+- Solo ASCII: sin tildes (á,é,í,ó,ú), sin ñ, sin ¿ o ¡
+- Booleanos: cierto/falso. Lógica: y/o/no. Null: nulo
+- Mínimo: cada token debe llevar significado
+```
+
+Ver [docs/llm-guide.md](docs/llm-guide.md) para la guía completa con todos los keywords, patrones comunes y anti-patrones.
+
+---
+
+## Arquitectura
 
 ```
 ┌─────────────┐
-│ .ho file │
+│  .ho file   │
 └──────┬──────┘
        │
        ▼
 ┌─────────────┐
-│  Normalizer │  ñ→nh, á→a, ¿→ (ASCII-only)
+│  Normalizer │  ñ→nh, á→a, ¿→(removed)  (ASCII-only)
 └──────┬──────┘
        │
        ▼
@@ -270,82 +297,53 @@ See [docs/llm-guide.md](docs/llm-guide.md) for the complete guide including all 
        │
        ▼
 ┌─────────────┐
-│   Parser    │  recursive descent → AST
+│   Parser    │  recursive descent → AST compartido
 └──────┬──────┘
        │
        ├──────────────┬──────────────┬──────────────┐
        ▼              ▼              ▼              ▼
 ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
 │  Python   │  │    Go     │  │     C     │  │   Rust    │
-│  Backend  │  │  Backend  │  │  Backend  │  │  Backend  │
+│ ✅ v0.1  │  │ ✅ v1.0  │  │ ✅ v0.1  │  │ 🔄 stub  │
 └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘
       │               │              │               │
       ▼               ▼              ▼               ▼
    .py file        .go file       .c file        .rs file
-   (exec'd)      (go build)    (gcc/clang)   (rustc/cargo)
+  (exec'd)       (go build)    (gcc/clang)   (rustc/cargo)
 ```
 
 ---
 
 ## Roadmap
 
-### Phase 1 — Prototype (v0.1) ← Current
-- [x] Lexer + Parser + Transpiler
-- [x] Variables, conditionals, loops, functions, pipes
-- [x] Four backends: Python, Go (stub), C, Rust (stub)
-- [x] Cybersec modules: scanner, recon, capture, attack, analysis, report
-- [x] CLI: run, compile --target, repl
-- [x] 7 example programs
+| Fase | Versión | Estado | Enfoque |
+|------|---------|--------|---------|
+| 1 | v0.1 | ✅ Completa | Core compiler, Python backend |
+| 2 | v0.2 | ✅ Completa | Lexer/parser robusto, módulos cybersec reales |
+| 3 | v0.3 | ✅ Completa | Python backend completo (capture, attack, fuzzer) |
+| 4 | v0.4 | ✅ Completa | Go backend funcional — goroutines, stdlib |
+| 5 | v0.5 | ⏳ Próxima | Rust backend funcional — memory safety |
+| 6 | v0.6 | ⏳ | C backend completo — libpcap, raw sockets |
+| 7 | v0.7 | ⏳ | Módulos, multi-return, error handling |
+| 8 | v0.8 | ⏳ | Tooling: compile, check, fmt, VS Code extension |
+| — | v1.0 | ⏳ | Todos los backends + 300+ tests + ecosistema |
 
-### Phase 2 — Python Expansion (v0.2)
-- [ ] All cybersec modules fully functional in Python
-- [ ] Standard library (red, archivo, texto, crypto)
-- [ ] Better error reporting with suggestions
-- [ ] Plugin system for extending the language
-
-### Phase 3 — Go Backend (v0.3)
-- [ ] Go backend fully functional
-- [ ] Native integration: subfinder, nuclei, httpx, naabu
-- [ ] Standalone binary generation (no runtime dependency)
-- [ ] Automatic goroutines for parallel operations
-
-### Phase 4 — Rust Backend (v0.4)
-- [ ] Rust backend fully functional
-- [ ] Integration with rustscan, feroxbuster, cargo-audit
-- [ ] Memory-safe binary generation
-- [ ] Fuzzer and protocol parser support via cargo-fuzz
-
-### Phase 5 — C Backend (v0.5)
-- [ ] C backend fully functional
-- [ ] Integration with libpcap, OpenSSL, raw sockets
-- [ ] Shellcode and exploit generation
-- [ ] Kernel module and driver templates
-
-### Phase 6 — Intelligence (v0.6)
-- [ ] Auto-resolve dependencies per target (pip, go mod, cargo, make)
-- [ ] Detection of insecure patterns in code
-- [ ] Automatic target recommendation based on use case
-- [ ] Integration with cybersec APIs (Shodan, VirusTotal, etc.)
-
-### Phase 7 — Ecosystem (v1.0)
-- [ ] Multi-target package manager
-- [ ] LSP (Language Server Protocol) for editors
-- [ ] VS Code extension with syntax highlighting
-- [ ] Interactive web playground
-- [ ] Support for additional targets (Zig, Nim, Assembly)
+Ver [docs/roadmap.md](docs/roadmap.md) para los prompts de trabajo y verificación de cada fase.
 
 ---
 
-## Contributing
+## Contribuir
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Ver [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+**Regla de doc-sync**: toda PR que modifique el compilador, el AST o un backend debe actualizar el README, spec.md y roadmap.md en el mismo commit. La documentación desactualizada es un bug.
 
 ---
 
-*Built with [Habla DSL](https://github.com/chrisz-toledo/habla)*
+## Licencia
+
+MIT — ver [LICENSE](LICENSE).
+
+---
+
+*Construido con [Hado DSL](https://github.com/chrisz-toledo/hado)*
