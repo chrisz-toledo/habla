@@ -180,9 +180,11 @@ class CyberEnumerate(Node):
 
 @dataclass
 class GenerateReport(Node):
-    """genera reporte con datos"""
+    """genera reporte con datos
+    output_file: si se especifica, guarda el JSON a disco automaticamente."""
     data: Optional[Node] = None
     options: List[Node] = field(default_factory=list)
+    output_file: str = "hado_report.json"  # auto-save por defecto
 
 
 # ─── HTTP / red ───────────────────────────────────────────────────────────────

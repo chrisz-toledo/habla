@@ -236,9 +236,14 @@ class PythonTranspiler(BaseTranspiler):
         return f"_hado_fuzz({target}, {kw_str})"
 
     def _visit_GenerateReport(self, node: GenerateReport) -> str:
+        self.imports.need("json")
         self.imports.need_helper("report")
         data = self._visit(node.data) if node.data else 'None'
-        return f"_hado_report({data})"
+        out = getattr(node, 'output_file', 'hado_report.json')
+        # Auto-guarda el reporte JSON a disco y tambien lo imprime
+        return (
+            f"_hado_report({data}, output_file={out!r}, format='json')"
+        )
 
     # ─── HTTP ────────────────────────────────────────────────────────────────
 
