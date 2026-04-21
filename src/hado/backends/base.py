@@ -131,6 +131,15 @@ _BACKEND_REGISTRY: dict[str, dict] = {
         "extension": ".js",
         "compile_cmd": None,
     },
+    "solidity": {
+        "version": "0.9",
+        "status": "funcional",
+        "description": "Smart Contracts, Web3, Oracle emitters",
+        "module": "hado.backends.solidity_transpiler",
+        "class": "SolidityTranspiler",
+        "extension": ".sol",
+        "compile_cmd": None,
+    },
 }
 
 
