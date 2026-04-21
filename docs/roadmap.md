@@ -590,6 +590,39 @@ grep -c "^import\|^from" out.py  # Hado lo genera, el usuario no lo escribe
 
 ---
 
+## Hacia Hado v2.0: El Pentester Autónomo (Análisis HackTheBox)
+
+> **Filosofía de sistemas**: Para que una Inteligencia Artificial pueda pasar de ser un "asistente que escribe scripts" a un "agente que compromete redes", el lenguaje subyacente debe soportar el ciclo de vida completo del ataque (Cyber Kill Chain).
+
+Tras desplegar un agente web autónomo para analizar el **Tier 0, 1 y 2 (Starting Point)** de la plataforma HackTheBox, hemos mapeado exactamente qué necesita el compilador Hado para que una IA pueda resolver estas máquinas de forma 100% autónoma.
+
+### 1. Soporte de Protocolos Extendidos (El "Dialecto" de la Red)
+*   **Contexto HTB:** Máquinas como *Meow*, *Dancing* y *Redeemer* (Tier 0) se basan en abusar de configuraciones por defecto en servicios no-HTTP.
+*   **Qué falta en Hado:** Backends para **Telnet, SMB, Redis, MSSQL y Rsync**.
+*   **Por qué:** Actualmente Hado es fuerte en HTTP, SSH y FTP. Si no puede interactuar nativamente con un recurso compartido SMB (`\\10.10.10.x\share`) o enviar comandos a una base de datos Redis en texto plano, la IA se queda ciega en la fase de enumeración.
+
+### 2. Gestión de Sesiones Interactivas (`ExecuteCommand`)
+*   **Contexto HTB:** Máquinas como *Archetype* (Tier 2) requieren obtener una shell (reverse shell o bind shell) y enviar comandos interactivos para escalar privilegios.
+*   **Qué falta en Hado:** El nodo AST `ExecuteCommand` y el verbo **`ejecuta`**.
+*   **Por qué:** Hado es excelente disparando acciones atómicas (`escanea`, `ataca`), pero carece del concepto de "mantener un canal abierto". Necesitamos poder hacer: `sesion = conecta "10.10.10.10:4444" -> ejecuta "whoami"`.
+
+### 3. Integración de Herramientas Estándar (Wrappers Oficiales)
+*   **Contexto HTB:** Máquinas como *Preignition* o *Responder* asumen el uso de Gobuster/FFUF (fuzzing de directorios) e Impacket (abuso de NetNTLMv2).
+*   **Qué falta en Hado:** Integración nativa que orqueste binarios externos cuando sea más eficiente que reimplementarlos en Python/Go.
+*   **Por qué:** Una IA no debería tener que memorizar la sintaxis de `impacket-psexec`. Debería escribir `ataca psexec en "10.10.10.x"` y Hado se encargaría de invocar el binario subyacente y parsear el output.
+
+### 4. Motor de Payloads y Fuzzing Web Complejo
+*   **Contexto HTB:** Máquinas como *Unified* (Log4j), *Markup* (XXE) y *Bike* (SSTI) requieren inyección de payloads estructurados.
+*   **Qué falta en Hado:** Una librería de payloads nativa para inyección de dependencias, templates y entidades XML.
+*   **Por qué:** El verbo `enumera` actualmente se enfoca en fuerza bruta. Necesitamos expandirlo a `inyecta payload "xxe_read_file" en url`.
+
+### 5. Memoria Táctica y Persistencia de Estado
+*   **Contexto HTB:** En casi todos los CTFs, la Fase A (ej. leer un archivo SMB) revela credenciales que deben usarse en la Fase B (ej. login MSSQL).
+*   **Qué falta en Hado:** Un sistema de *State Management* (almacén de credenciales y hallazgos en memoria durante la ejecución del script).
+*   **Por qué:** Para encadenar vectores de ataque, Hado debe permitir algo como `creds = extrae credenciales de reporte -> ataca ssh con creds`. Sin esto, la IA pierde el hilo conductor del ataque.
+
+---
+
 ## Resumen de Fases
 
 | Fase | Versión | Estado | Enfoque | Leverage Point |
