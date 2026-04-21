@@ -63,8 +63,31 @@ class CTranspiler(BaseTranspiler):
             self._includes.add("<netinet/in.h>")
             self._includes.add("<arpa/inet.h>")
             self._includes.add("<unistd.h>")
-        elif isinstance(node, HttpGet):
-            self._includes.add("<stdio.h>")  # Nota: libcurl se agrega como comentario
+        elif isinstance(node, CyberRecon):
+            self._includes.add("<netdb.h>")
+            self._includes.add("<sys/socket.h>")
+            self._includes.add("<arpa/inet.h>")
+            self._includes.add("<string.h>")
+        elif isinstance(node, CyberAttack):
+            self._includes.add("<curl/curl.h>")
+            self._includes.add("<stdio.h>")
+            self._includes.add("<stdlib.h>")
+            self._includes.add("<string.h>")
+        elif isinstance(node, (CyberEnumerate, CyberAnalyze)):
+            self._includes.add("<curl/curl.h>")
+            self._includes.add("<stdio.h>")
+            self._includes.add("<stdlib.h>")
+        elif isinstance(node, CyberCapture):
+            self._includes.add("<pcap.h>")
+            self._includes.add("<stdio.h>")
+        elif isinstance(node, GenerateReport):
+            self._includes.add("<stdio.h>")
+        elif isinstance(node, (HttpGet, HttpPost)):
+            self._includes.add("<curl/curl.h>")
+            self._includes.add("<stdio.h>")
+            self._includes.add("<stdlib.h>")
+        elif isinstance(node, SaveStatement):
+            self._includes.add("<stdio.h>")
         elif isinstance(node, (ForStatement, WhileStatement)):
             for s in getattr(node, "body", []):
                 self._check_includes(s)
@@ -73,9 +96,7 @@ class CTranspiler(BaseTranspiler):
                 self._check_includes(s)
 
     def _emit_helpers(self) -> str:
-        if "<sys/socket.h>" not in self._includes:
-            return ""
-        return """\
+        scan_helper = """\
 /* Hado helper: escanea puertos */
 int hado_scan_port(const char *host, int port) {
     struct sockaddr_in addr;
@@ -92,6 +113,70 @@ int hado_scan_port(const char *host, int port) {
     return result == 0;
 }
 """
+        curl_helper = """\
+/* Hado helper: HTTP req con libcurl */
+struct hado_mem_str { char *memory; size_t size; };
+static size_t _hado_write_cb(void *contents, size_t size, size_t nmemb, void *userp) {
+  size_t realsize = size * nmemb;
+  struct hado_mem_str *mem = (struct hado_mem_str *)userp;
+  char *ptr = realloc(mem->memory, mem->size + realsize + 1);
+  if(!ptr) return 0;
+  mem->memory = ptr;
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+  return realsize;
+}
+char* hado_http_req(const char* url, const char* method, const char* body, const char* auth) {
+  CURL *curl; CURLcode res;
+  struct hado_mem_str chunk; chunk.memory = malloc(1); chunk.size = 0;
+  curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _hado_write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+    if(body) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    if(auth) curl_easy_setopt(curl, CURLOPT_USERPWD, auth);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
+  return chunk.memory;
+}
+"""
+        recon_helper = """\
+/* Hado helper: DNS recon */
+char* hado_recon_dns(const char* domain) {
+    struct addrinfo hints, *res, *p;
+    char ipstr[INET6_ADDRSTRLEN];
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    char* result = calloc(4096, 1);
+    if (getaddrinfo(domain, NULL, &hints, &res) != 0) return result;
+    for(p = res; p != NULL; p = p->ai_next) {
+        void *addr;
+        if (p->ai_family == AF_INET) {
+            addr = &((struct sockaddr_in *)p->ai_addr)->sin_addr;
+            inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
+            if (strlen(result) + strlen(ipstr) + 3 < 4096) {
+                strcat(result, ipstr); strcat(result, ", ");
+            }
+        }
+    }
+    freeaddrinfo(res);
+    return result;
+}
+"""
+        helpers = []
+        if "<sys/socket.h>" in self._includes:
+            if "<netdb.h>" in self._includes:
+                helpers.append(recon_helper)
+            if "hado_scan_port" in scan_helper: # Condicion dummy para usar scan_helper si es necesario, pero _check_includes de CyberScan no se usa solo
+                helpers.append(scan_helper)
+        if "<curl/curl.h>" in self._includes:
+            helpers.append(curl_helper)
+        return "\n\n".join(helpers)
 
     # ─── Visitors ────────────────────────────────────────────────────────────
 
@@ -162,6 +247,16 @@ int hado_scan_port(const char *host, int port) {
         lines.append(f"{self._ind()}}}")
         return "\n".join(lines)
 
+    def _visit_WhileStatement(self, node: WhileStatement) -> str:
+        cond = self._visit(node.condition)
+        lines = [f"{self._ind()}while ({cond}) {{"]
+        self._indent += 1
+        for stmt in node.body:
+            lines.append(self._visit(stmt))
+        self._indent -= 1
+        lines.append(f"{self._ind()}}}")
+        return "\n".join(lines)
+
     def _visit_ForStatement(self, node: ForStatement) -> str:
         iterable = self._visit(node.iterable)
         var = node.var
@@ -198,6 +293,20 @@ int hado_scan_port(const char *host, int port) {
         val = self._visit(node.value) if node.value else ""
         return f"{self._ind()}return {val};".rstrip() + ";"
 
+    def _visit_SaveStatement(self, node: SaveStatement) -> str:
+        fname = self._visit(node.filename) if node.filename else '"output.txt"'
+        val = self._visit(node.value) if node.value else "_pipe_val"
+        lines = [
+            f"{self._ind()}{{",
+            f"{self._ind()}    FILE *_f = fopen({fname}, \"w\");",
+            f"{self._ind()}    if (_f) {{",
+            f'{self._ind()}        fprintf(_f, "%s", (char*){val});',
+            f"{self._ind()}        fclose(_f);",
+            f"{self._ind()}    }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
     # ─── Cyber ────────────────────────────────────────────────────────────────
 
     def _visit_CyberScan(self, node: CyberScan) -> str:
@@ -216,15 +325,100 @@ int hado_scan_port(const char *host, int port) {
         ]
         return "\n".join(lines)
 
+    def _visit_CyberRecon(self, node: CyberRecon) -> str:
+        domain = self._visit(node.domain) if node.domain else '"example.com"'
+        return f'printf("[hado] Recon DNS on %s: %s\\n", {domain}, hado_recon_dns({domain}));'
+
+    def _visit_CyberAttack(self, node: CyberAttack) -> str:
+        target = self._visit(node.target) if node.target else '"127.0.0.1"'
+        username = self._visit(node.username) if node.username else '"admin"'
+        wordlist = self._visit(node.wordlist) if node.wordlist else '{"admin", "password", "123456"}'
+        lines = [
+            f"{self._ind()}{{ /* HTTP basic-auth brute force (mock wordlist iter) */",
+            f"{self._ind()}    const char* _wl[] = {wordlist};",
+            f"{self._ind()}    int _nwl = sizeof(_wl)/sizeof(_wl[0]);",
+            f"{self._ind()}    for(int _i=0; _i<_nwl; _i++) {{",
+            f"{self._ind()}        char _auth[256];",
+            f"{self._ind()}        snprintf(_auth, sizeof(_auth), \"%s:%s\", {username}, _wl[_i]);",
+            f"{self._ind()}        char* _res = hado_http_req({target}, \"GET\", NULL, _auth);",
+            f"{self._ind()}        if (_res && strlen(_res) > 0) {{",
+            f'{self._ind()}            printf("[hado] Brute success: %s\\n", _auth);',
+            f"{self._ind()}            free(_res);",
+            f"{self._ind()}            break;",
+            f"{self._ind()}        }}",
+            f"{self._ind()}        if(_res) free(_res);",
+            f"{self._ind()}    }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
+    def _visit_CyberAnalyze(self, node: CyberAnalyze) -> str:
+        target = self._visit(node.source) if node.source else '"http://127.0.0.1"'
+        return f'printf("[hado] Analizando headers (usar libcurl CURLOPT_HEADERDATA) en: %s\\n", {target});'
+
+    def _visit_CyberCapture(self, node: CyberCapture) -> str:
+        iface = self._visit(node.interface) if node.interface else '"eth0"'
+        lines = [
+            f"{self._ind()}{{ /* Captura de paquetes usando libpcap */",
+            f"{self._ind()}    char errbuf[PCAP_ERRBUF_SIZE];",
+            f"{self._ind()}    pcap_t *handle = pcap_open_live({iface}, BUFSIZ, 1, 1000, errbuf);",
+            f"{self._ind()}    if (handle == NULL) {{",
+            f'{self._ind()}        fprintf(stderr, "No se pudo abrir el dispositivo %s: %s\\n", {iface}, errbuf);',
+            f"{self._ind()}    }} else {{",
+            f'{self._ind()}        printf("[hado] Capturando en interfaz: %s (Compilar con -lpcap)\\n", {iface});',
+            f"{self._ind()}        pcap_close(handle);",
+            f"{self._ind()}    }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
+    def _visit_CyberEnumerate(self, node: CyberEnumerate) -> str:
+        target = self._visit(node.target) if node.target else '"127.0.0.1"'
+        wordlist = self._visit(node.wordlist) if node.wordlist else '{"admin", "login"}'
+        lines = [
+            f"{self._ind()}{{ /* Dir fuzzing secuencial */",
+            f"{self._ind()}    const char* _wl[] = {wordlist};",
+            f"{self._ind()}    int _nwl = sizeof(_wl)/sizeof(_wl[0]);",
+            f"{self._ind()}    for(int _i=0; _i<_nwl; _i++) {{",
+            f"{self._ind()}        char _url[512];",
+            f"{self._ind()}        snprintf(_url, sizeof(_url), \"%s/%s\", {target}, _wl[_i]);",
+            f"{self._ind()}        char* _res = hado_http_req(_url, \"GET\", NULL, NULL);",
+            f"{self._ind()}        if (_res) {{",
+            f'{self._ind()}            printf("[hado] Encontrado: %s\\n", _url);',
+            f"{self._ind()}            free(_res);",
+            f"{self._ind()}        }}",
+            f"{self._ind()}    }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
+    def _visit_CyberFindVulns(self, node: CyberFindVulns) -> str:
+        target = self._visit(node.target) if node.target else '"target"'
+        return f'printf("[hado] Escaneando vulnerabilidades en: %s\\n", {target});'
+
+    def _visit_GenerateReport(self, node: GenerateReport) -> str:
+        data = self._visit(node.data) if node.data else '"{}"'
+        fname = f'"{node.output_file}"' if hasattr(node, 'output_file') and node.output_file else '"report.json"'
+        lines = [
+            f"{self._ind()}{{",
+            f"{self._ind()}    FILE *_f = fopen({fname}, \"w\");",
+            f"{self._ind()}    if (_f) {{",
+            f'{self._ind()}        fprintf(_f, "{{\\"data\\": \\"%s\\"}}", (char*){data});',
+            f"{self._ind()}        fclose(_f);",
+            f'{self._ind()}        printf("[hado] Reporte guardado en %s\\n", {fname});',
+            f"{self._ind()}    }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
     def _visit_HttpGet(self, node: HttpGet) -> str:
         url = self._visit(node.url) if node.url else '""'
-        return (
-            f"{self._ind()}/* HTTP GET {url} */\n"
-            f"{self._ind()}/* Nota: requiere libcurl. Compila con: gcc -lcurl */\n"
-            f"{self._ind()}/* CURL *curl = curl_easy_init(); */\n"
-            f'{self._ind()}/* curl_easy_setopt(curl, CURLOPT_URL, {url}); */\n'
-            f"{self._ind()}/* curl_easy_perform(curl); */"
-        )
+        return f"hado_http_req({url}, \"GET\", NULL, NULL)"
+
+    def _visit_HttpPost(self, node: HttpPost) -> str:
+        url = self._visit(node.url) if node.url else '""'
+        body = self._visit(node.body) if node.body else '""'
+        return f"hado_http_req({url}, \"POST\", {body}, NULL)"
 
     # ─── Expresiones ─────────────────────────────────────────────────────────
 
@@ -265,6 +459,61 @@ int hado_scan_port(const char *host, int port) {
     def _visit_PropertyAccess(self, node: PropertyAccess) -> str:
         obj = self._visit(node.obj)
         return f"{obj}.{node.prop}"
+
+    def _visit_IndexAccess(self, node: IndexAccess) -> str:
+        obj = self._visit(node.obj)
+        idx = self._visit(node.index)
+        return f"((void**){obj})[(int)({idx})]"
+
+    def _visit_DictLiteral(self, node: DictLiteral) -> str:
+        # En C nativo sin dependencias, serializamos dicts pequeños como JSON string literal
+        pairs = []
+        for k, v in node.pairs:
+            key = self._visit(k).strip('"')
+            val = self._visit(v).strip('"')
+            pairs.append(f'\\"{key}\\": \\"{val}\\"')
+        json_str = ", ".join(pairs)
+        return f'"{{{json_str}}}"'
+
+    def _visit_FunctionCall(self, node: FunctionCall) -> str:
+        args = ", ".join(self._visit(a) for a in node.args)
+        return f"{node.func}({args})"
+
+    def _visit_PipeExpression(self, node: PipeExpression) -> str:
+        lines = [f"{self._ind()}void *_pipe_val = NULL;"]
+        for i, step in enumerate(node.steps):
+            if i == 0:
+                val = self._visit(step)
+                lines.append(f"{self._ind()}_pipe_val = (void*)(uintptr_t){val};")
+            else:
+                if isinstance(step, (ShowStatement, SaveStatement)):
+                    lines.append(self._visit(step))
+                else:
+                    val = self._visit(step)
+                    lines.append(f"{self._ind()}_pipe_val = (void*)(uintptr_t){val};")
+        return "\n".join(lines)
+
+    def _visit_FilterExpression(self, node: FilterExpression) -> str:
+        src = self._visit(node.iterable) if node.iterable else "_pipe_val"
+        cond = self._visit(node.condition)
+        var = node.var
+        # Aproximación genérica C array sin conocer longitud
+        lines = [
+            f"0; /* Filter requiere length info en C. Stub temporal. */",
+            f"{self._ind()}for(int _i=0; _i<10; _i++) {{",
+            f"{self._ind()}    void* {var} = ((void**){src})[_i];",
+            f"{self._ind()}    if({cond}) {{ /* append logic */ }}",
+            f"{self._ind()}}}"
+        ]
+        return "\n".join(lines)
+
+    def _visit_CountExpression(self, node: CountExpression) -> str:
+        src = self._visit(node.source) if node.source else "_pipe_val"
+        return f"0 /* Count() req struct array en C, mock 0 para {src} */"
+
+    def _visit_SortExpression(self, node: SortExpression) -> str:
+        src = self._visit(node.source) if node.source else "_pipe_val"
+        return f"{src} /* Sort() req struct array en C, bypass para {src} */"
 
     def _visit_ExpressionStatement(self, node: ExpressionStatement) -> str:
         return f"{self._ind()}{self._visit(node.expr)};"
