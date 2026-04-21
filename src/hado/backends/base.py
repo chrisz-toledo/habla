@@ -122,6 +122,15 @@ _BACKEND_REGISTRY: dict[str, dict] = {
         "extension": ".ps1",
         "compile_cmd": None,
     },
+    "javascript": {
+        "version": "0.8",
+        "status": "funcional",
+        "description": "Superficie Web, Node.js, Web Exploitation",
+        "module": "hado.backends.js_transpiler",
+        "class": "JavascriptTranspiler",
+        "extension": ".js",
+        "compile_cmd": None,
+    },
 }
 
 
