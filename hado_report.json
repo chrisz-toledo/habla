@@ -1,0 +1,19 @@
+{
+  "title": "Reporte de Seguridad",
+  "author": "Hado Security Scanner",
+  "timestamp": "2026-04-14 23:04:27",
+  "format": "markdown",
+  "data": [
+    {
+      "target": "scanme.nmap.org",
+      "open_ports": [],
+      "closed_ports": [],
+      "results": {},
+      "method": "socket"
+    },
+    {
+      "raw": "scanme.nmap.org",
+      "mode": "raw"
+    }
+  ]
+}
