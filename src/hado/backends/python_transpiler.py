@@ -27,13 +27,17 @@ _MODULE_IMPORTS = {
 
 # Mapa de imports de helpers de cybersec
 _HELPER_IMPORTS = {
+    # ─── Core cybersec ───────────────────────────────────────────────────
     "scan":             "from hado.cybersec.scanner import scan as _hado_scan",
     "find_subdomains":  "from hado.cybersec.recon import find_subdomains as _hado_find_subdomains",
     "capture":          "from hado.cybersec.capture import capture as _hado_capture",
     "attack":           "from hado.cybersec.attack import attack as _hado_attack",
+    "brute_force":      "from hado.cybersec.attack import brute_force as _hado_brute_force",
     "analyze":          "from hado.cybersec.analysis import analyze as _hado_analyze",
     "analyze_headers":  "from hado.cybersec.analysis import analyze_headers as _hado_analyze_headers",
     "report":           "from hado.cybersec.report import report as _hado_report",
+    "fuzz":             "from hado.cybersec.fuzzer import fuzz as _hado_fuzz",
+    # ─── Crypto ──────────────────────────────────────────────────────────
     "hash_md5":         "from hado.cybersec.crypto import hash_md5 as _hado_hash_md5",
     "hash_sha1":        "from hado.cybersec.crypto import hash_sha1 as _hado_hash_sha1",
     "hash_sha256":      "from hado.cybersec.crypto import hash_sha256 as _hado_hash_sha256",
@@ -41,7 +45,52 @@ _HELPER_IMPORTS = {
     "b64_encode":       "from hado.cybersec.crypto import b64_encode as _hado_b64_encode",
     "b64_decode":       "from hado.cybersec.crypto import b64_decode as _hado_b64_decode",
     "generate_token":   "from hado.cybersec.crypto import generate_token as _hado_generate_token",
-    "fuzz":             "from hado.cybersec.fuzzer import fuzz as _hado_fuzz",
+    # ─── Binary analysis ─────────────────────────────────────────────────
+    "parse_binary":      "from hado.cybersec.binary import parse_binary as _hado_parse_binary",
+    "parse_elf":         "from hado.cybersec.binary import parse_elf as _hado_parse_elf",
+    "parse_pe":          "from hado.cybersec.binary import parse_pe as _hado_parse_pe",
+    "parse_macho":       "from hado.cybersec.binary import parse_macho as _hado_parse_macho",
+    "detect_protections": "from hado.cybersec.binary import detect_protections as _hado_detect_protections",
+    # ─── Exploit utilities ───────────────────────────────────────────────
+    "cyclic":            "from hado.cybersec.exploit import cyclic as _hado_cyclic",
+    "cyclic_find":       "from hado.cybersec.exploit import cyclic_find as _hado_cyclic_find",
+    "pattern_create":    "from hado.cybersec.exploit import pattern_create as _hado_pattern_create",
+    "pattern_offset":    "from hado.cybersec.exploit import pattern_offset as _hado_pattern_offset",
+    "p32":               "from hado.cybersec.exploit import p32 as _hado_p32",
+    "p64":               "from hado.cybersec.exploit import p64 as _hado_p64",
+    "u32":               "from hado.cybersec.exploit import u32 as _hado_u32",
+    "u64":               "from hado.cybersec.exploit import u64 as _hado_u64",
+    "flat":              "from hado.cybersec.exploit import flat as _hado_flat",
+    "badchars":          "from hado.cybersec.exploit import badchars as _hado_badchars",
+    "npad":              "from hado.cybersec.exploit import npad as _hado_npad",
+    "build_bof_payload": "from hado.cybersec.exploit import build_bof_payload as _hado_build_bof_payload",
+    "build_format_string": "from hado.cybersec.exploit import build_format_string as _hado_build_format_string",
+    # ─── Packet crafting ─────────────────────────────────────────────────
+    "craft_tcp_packet":  "from hado.cybersec.packets import craft_tcp_packet as _hado_craft_tcp_packet",
+    "craft_udp_packet":  "from hado.cybersec.packets import craft_udp_packet as _hado_craft_udp_packet",
+    "craft_icmp_packet": "from hado.cybersec.packets import craft_icmp_packet as _hado_craft_icmp_packet",
+    "syn_scan":          "from hado.cybersec.packets import syn_scan as _hado_syn_scan",
+    "udp_scan":          "from hado.cybersec.packets import udp_scan as _hado_udp_scan",
+    "icmp_ping":         "from hado.cybersec.packets import icmp_ping as _hado_icmp_ping",
+    # ─── ROP ─────────────────────────────────────────────────────────────
+    "find_gadgets":      "from hado.cybersec.rop import find_gadgets as _hado_find_gadgets",
+    "gadgets_summary":   "from hado.cybersec.rop import gadgets_summary as _hado_gadgets_summary",
+    "build_execve_chain": "from hado.cybersec.rop import build_execve_chain as _hado_build_execve_chain",
+    "build_mprotect_chain": "from hado.cybersec.rop import build_mprotect_chain as _hado_build_mprotect_chain",
+    # ─── Shellcode ────────────────────────────────────────────────────────
+    "get_shellcode":     "from hado.cybersec.shellcode import get_shellcode as _hado_get_shellcode",
+    "list_shellcodes":   "from hado.cybersec.shellcode import list_shellcodes as _hado_list_shellcodes",
+    "nop_sled":          "from hado.cybersec.shellcode import nop_sled as _hado_nop_sled",
+    "xor_encode":        "from hado.cybersec.shellcode import xor_encode as _hado_xor_encode",
+    "format_shellcode":  "from hado.cybersec.shellcode import format_shellcode as _hado_format_shellcode",
+    "customize_reverse_shell": "from hado.cybersec.shellcode import customize_reverse_shell as _hado_customize_reverse_shell",
+    # ─── VulnDB ──────────────────────────────────────────────────────────
+    "lookup_cve":        "from hado.cybersec.vulndb import lookup_cve as _hado_lookup_cve",
+    "search_cve":        "from hado.cybersec.vulndb import search_cve as _hado_search_cve",
+    "search_product":    "from hado.cybersec.vulndb import search_product as _hado_search_product",
+    "get_recent_critical": "from hado.cybersec.vulndb import get_recent_critical as _hado_get_recent_critical",
+    "has_known_exploit": "from hado.cybersec.vulndb import has_known_exploit as _hado_has_known_exploit",
+    "analyze_cve_list":  "from hado.cybersec.vulndb import analyze_cve_list as _hado_analyze_cve_list",
 }
 
 # Traduccion de operadores
@@ -343,6 +392,13 @@ class PythonTranspiler(BaseTranspiler):
         args = [self._visit(a) for a in node.args]
         kwargs = [f"{k}={self._visit(v)}" for k, v in node.kwargs]
         all_args = ", ".join(args + kwargs)
+
+        # Auto-resolve: si el nombre de la funcion coincide con un helper
+        # registrado, emitir el import automaticamente y usar el alias _hado_
+        if node.func in _HELPER_IMPORTS:
+            self.imports.need_helper(node.func)
+            return f"_hado_{node.func}({all_args})"
+
         return f"{node.func}({all_args})"
 
     # ─── Pipe chain ──────────────────────────────────────────────────────────
