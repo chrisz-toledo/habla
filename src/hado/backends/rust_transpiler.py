@@ -66,7 +66,9 @@ class RustTranspiler(BaseTranspiler):
         main_rs  → contenido de src/main.rs
         cargo_toml → contenido de Cargo.toml
         """
+        self._indent = 1  # body va dentro de fn main()
         body_lines = self._visit_program(self.ast)
+        self._indent = 0
 
         # Construir función main
         main_body = "\n".join(body_lines)
