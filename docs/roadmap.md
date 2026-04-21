@@ -633,7 +633,7 @@ Tras desplegar un agente web autónomo para analizar el **Tier 0, 1 y 2 (Startin
 | 4 | v0.4 | ✅ Completa | Go backend real + goroutines concurrentes | Escaneo a escala |
 | 5 | v0.5 | ✅ Completa*| Rust backend real + memory safety (Tokio) | Explotación segura |
 | 6 | v0.6 | ✅ Completa | C backend puro (Sockets, Kernel mode) | Bajo nivel |
-| 7 | v0.7 | ⏳ Próxima | **"Living off the Land"**: Bash y PowerShell | Post-explotación (Fileless) |
+| 7 | v0.7 | ✅ Completa | **"Living off the Land"**: Bash y PowerShell | Post-explotación (Fileless) |
 | 8 | v0.8 | ⏳ | **Superficie Web**: JS/Node.js y WebAssembly | Explotación de navegadores |
 | 9 | v0.9 | ⏳ | **Web3 y Smart Contracts**: Solidity | Ecosistema Blockchain |
 | 10| v1.0 | ⏳ | **Hardware & IoT**: C para Flipper Zero / Arduino | Ataques físicos (RFID, BadUSB) |
