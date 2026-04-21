@@ -592,17 +592,19 @@ grep -c "^import\|^from" out.py  # Hado lo genera, el usuario no lo escribe
 
 ## Resumen de Fases
 
-| Fase | Version | Estado | Enfoque | Leverage Point |
+| Fase | Versión | Estado | Enfoque | Leverage Point |
 |---|---|---|---|---|
 | 1 | v0.1 | ✅ Completa | Core compiler, Python backend | AST + Lexer |
-| 2 | v0.2 | ✅ Completa | Lexer/parser robusto, módulos reales | Parser robusto |
-| 3 | v0.3 | ✅ Completa | Python completo (capture, attack, fuzzer) | Módulos backend |
-| 4 | v0.4 | ✅ Completa | Go backend real + goroutines (188 tests) | Concurrencia |
-| 5 | v0.5 | ⏳ Próxima | Rust backend real + memory safety | Safety |
-| 6 | v0.6 | ⏳ | C backend mejorado + libpcap | Kernel/exploit |
-| 7 | v0.7 | ⏳ | Módulos, multi-return, error handling | Extensibilidad |
-| 8 | v0.8 | ⏳ | Tooling: compile, check, fmt, VS Code | UX |
-| — | v1.0 | ⏳ | Todos los backends + 300+ tests + ecosistema | Comunidad |
+| 2 | v0.2 | ✅ Completa | Lexer/parser robusto, módulos cyber reales | Parser robusto |
+| 3 | v0.3 | ✅ Completa | Python backend completo (100% módulos reales)| Módulos nativos |
+| 4 | v0.4 | ✅ Completa | Go backend real + goroutines concurrentes | Escaneo a escala |
+| 5 | v0.5 | ✅ Completa*| Rust backend real + memory safety (Tokio) | Explotación segura |
+| 6 | v0.6 | ⚠️ Alpha | C backend puro (Sockets, Kernel mode) | Bajo nivel |
+| 7 | v0.7 | ⏳ Próxima | **"Living off the Land"**: Bash y PowerShell | Post-explotación (Fileless) |
+| 8 | v0.8 | ⏳ | **Superficie Web**: JS/Node.js y WebAssembly | Explotación de navegadores |
+| 9 | v0.9 | ⏳ | **Web3 y Smart Contracts**: Solidity | Ecosistema Blockchain |
+| 10| v1.0 | ⏳ | **Hardware & IoT**: C para Flipper Zero / Arduino | Ataques físicos (RFID, BadUSB) |
+| — | v2.0 | ⏳ | **El Pentester Autónomo**: Ecosistema completo para Agentes de IA | Omnipotencia en Red |
 
 **Regla del sistema**: no saltarse fases. Cada fase es el stock que alimenta el siguiente.
 
