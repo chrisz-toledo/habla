@@ -469,12 +469,11 @@ class RustTranspiler(BaseTranspiler):
         return f"{node.func}({args})"
 
     def _visit_DictLiteral(self, node: DictLiteral) -> str:
-        self._rs_imports.add("std::collections::HashMap")
         pairs = []
         for k, v in node.pairs:
             pairs.append(f"map.insert({self._visit(k)}, {self._visit(v)});")
         inserts = " ".join(pairs)
-        return f"{{ let mut map = HashMap::new(); {inserts} map }}"
+        return f"{{ use std::collections::HashMap; let mut map = HashMap::new(); {inserts} map }}"
 
     def _visit_IndexAccess(self, node: IndexAccess) -> str:
         obj = self._visit(node.obj)

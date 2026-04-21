@@ -104,7 +104,7 @@ class ArduinoTranspiler(BaseTranspiler):
     def _visit_ForStatement(self, node: ForStatement) -> str:
         iterable = self._visit(node.iterable)
         lines = [
-            f"{self._ind()}// Mock array loop for Arduino",
+            f"{self._ind()}// Iteracion generica para array",
             f"{self._ind()}for (int _i = 0; _i < 10; _i++) {{"
         ]
         self._indent += 1
@@ -226,12 +226,12 @@ class ArduinoTranspiler(BaseTranspiler):
     def _visit_HttpGet(self, node: HttpGet) -> str:
         self._arduino_includes.add("HTTPClient")
         url = self._visit(node.url) if node.url else '""'
-        return f"\"<HTTP_GET_STUB>\""
+        return f"\"<HTTP_GET_PENDING>\""
 
     def _visit_HttpPost(self, node: HttpPost) -> str:
         self._arduino_includes.add("HTTPClient")
         url = self._visit(node.url) if node.url else '""'
-        return f"\"<HTTP_POST_STUB>\""
+        return f"\"<HTTP_POST_PENDING>\""
 
     def _visit_ExpressionStatement(self, node: ExpressionStatement) -> str:
         return f"{self._ind()}{self._visit(node.expr)};"

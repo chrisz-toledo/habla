@@ -100,7 +100,7 @@ class SolidityTranspiler(BaseTranspiler):
         iterable = self._visit(node.iterable)
         lines = [
             f"{self._ind()}// Solidity no soporta for..in iterators nativos sin tipos complejos.",
-            f"{self._ind()}// Mock loop para array",
+            f"{self._ind()}// Iteracion generica para array",
             f"{self._ind()}for (uint256 _i = 0; _i < {iterable}.length; _i++) {{"
         ]
         self._indent += 1
