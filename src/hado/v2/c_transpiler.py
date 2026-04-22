@@ -36,6 +36,48 @@ class CTranspiler:
         visitor = getattr(self, method, self._visit_unknown)
         visitor(node)
 
+    def _visit_WhileStatement(self, node: WhileStatement):
+        cond = self._evaluate(node.condition)
+        self.output.append(f"{self._indent()}while ({cond}) {{")
+        self.indent_level += 1
+        for stmt in node.body:
+            self._visit(stmt)
+        
+        # DROPS DE CADA ITERACIÓN (PREVENCIÓN DE OOM)
+        if "drops" in node.meta:
+            for var in node.meta["drops"]:
+                self.output.append(f"{self._indent()}free({var});")
+                
+        self.indent_level -= 1
+        self.output.append(f"{self._indent()}}}")
+
+    def _visit_ForStatement(self, node: ForStatement):
+        # Simplificación de for en C: iteración sobre lista simulada
+        self.output.append(f"{self._indent()}// Inicio de bucle para {node.var}")
+        self.output.append(f"{self._indent()}{{")
+        self.indent_level += 1
+        
+        # Declaración de variable de iteración
+        self.output.append(f"{self._indent()}char* {node.var};")
+        
+        # Simulamos el bucle (en la V2 final esto mapearía a iteradores reales)
+        self.output.append(f"{self._indent()}while (/* iterador */ true) {{")
+        self.indent_level += 1
+        for stmt in node.body:
+            self._visit(stmt)
+            
+        # DROPS AL FINAL DE CADA ITERACIÓN
+        if "drops" in node.meta:
+            for var in node.meta["drops"]:
+                self.output.append(f"{self._indent()}free({var});")
+                
+        self.output.append(f"{self._indent()}break; // Simulación de fin de lista")
+        self.indent_level -= 1
+        self.output.append(f"{self._indent()}}}")
+        
+        self.indent_level -= 1
+        self.output.append(f"{self._indent()}}}")
+
     def _visit_unknown(self, node: Node):
         self.output.append(f"{self._indent()}// Nodo no implementado: {type(node).__name__}")
 
@@ -92,6 +134,8 @@ class CTranspiler:
         if isinstance(node, StringLiteral):
             # En C real usaríamos strdup para ser coherentes con free()
             return f"strdup({node.value})" 
+        if isinstance(node, BooleanLiteral):
+            return "true" if node.value else "false"
         if isinstance(node, NumberLiteral):
             return str(node.value)
         if isinstance(node, Identifier):

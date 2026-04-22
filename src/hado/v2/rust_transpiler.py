@@ -20,11 +20,15 @@ class RustTranspiler:
         self.output.append("use tokio;")
         self.output.append("")
         self.output.append("#[tokio::main]")
-        self.output.append("async def main() {")
+        self.output.append("async fn main() {")
         self.indent_level += 1
+        self.output.append(f"{self._indent()}let mut _handles = vec![];")
+        self.output.append("")
         
         self._visit(self.program)
         
+        self.output.append("")
+        self.output.append(f"{self._indent()}for h in _handles {{ h.await.unwrap(); }}")
         self.indent_level -= 1
         self.output.append("}")
         return "\n".join(self.output)
@@ -58,13 +62,13 @@ class RustTranspiler:
         self.output.append(f'{self._indent()}println!("{{:?}}", {val_str});')
 
     def _visit_CyberScan(self, node: CyberScan):
-        # CyberScan en Rust V2 usa tareas asíncronas
+        # CyberScan en Rust V2 usa tareas asíncronas coleccionadas
         target = self._evaluate(node.target)
-        self.output.append(f"{self._indent()}tokio::spawn(async move {{")
+        self.output.append(f"{self._indent()}_handles.push(tokio::spawn(async move {{")
         self.indent_level += 1
         self.output.append(f"{self._indent()}println!(\"Escaneando {{:?}}...\", {target});")
         self.indent_level -= 1
-        self.output.append(f"{self._indent()}}}).await.unwrap();")
+        self.output.append(f"{self._indent()}}}));")
 
     def _evaluate(self, node: Node) -> str:
         if isinstance(node, StringLiteral):
