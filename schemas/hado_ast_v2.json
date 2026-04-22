@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hado V2.0 AST Schema",
+  "description": "Esquema JSON estricto para el Árbol de Sintaxis Abstracta (AST) de Hado V2.0, diseñado para comunicación M2M (LLM to Compiler).",
+  "type": "object",
+  "required": ["type", "body"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "Program",
+      "description": "El nodo raíz siempre es un Program."
+    },
+    "body": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Statement"
+      },
+      "description": "Lista de declaraciones y comandos Hado."
+    }
+  },
+  "definitions": {
+    "Node": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "Statement": {
+      "anyOf": [
+        { "$ref": "#/definitions/Assignment" },
+        { "$ref": "#/definitions/IfStatement" },
+        { "$ref": "#/definitions/WhileStatement" },
+        { "$ref": "#/definitions/ForStatement" },
+        { "$ref": "#/definitions/ExpressionStatement" },
+        { "$ref": "#/definitions/SaveStatement" },
+        { "$ref": "#/definitions/ShowStatement" }
+      ]
+    },
+    "Expression": {
+      "anyOf": [
+        { "$ref": "#/definitions/Identifier" },
+        { "$ref": "#/definitions/StringLiteral" },
+        { "$ref": "#/definitions/NumberLiteral" },
+        { "$ref": "#/definitions/BooleanLiteral" },
+        { "$ref": "#/definitions/NullLiteral" },
+        { "$ref": "#/definitions/ListLiteral" },
+        { "$ref": "#/definitions/DictLiteral" },
+        { "$ref": "#/definitions/BinaryOp" },
+        { "$ref": "#/definitions/FunctionCall" },
+        { "$ref": "#/definitions/CyberScan" },
+        { "$ref": "#/definitions/CyberAttack" },
+        { "$ref": "#/definitions/CyberRecon" },
+        { "$ref": "#/definitions/PipeExpression" }
+      ]
+    },
+    "Assignment": {
+      "type": "object",
+      "required": ["type", "name", "value"],
+      "properties": {
+        "type": { "type": "string", "const": "Assignment" },
+        "name": { "type": "string" },
+        "value": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "ExpressionStatement": {
+      "type": "object",
+      "required": ["type", "expr"],
+      "properties": {
+        "type": { "type": "string", "const": "ExpressionStatement" },
+        "expr": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "SaveStatement": {
+      "type": "object",
+      "required": ["type", "value", "filename"],
+      "properties": {
+        "type": { "type": "string", "const": "SaveStatement" },
+        "value": { "$ref": "#/definitions/Expression" },
+        "filename": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "ShowStatement": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string", "const": "ShowStatement" },
+        "value": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "IfStatement": {
+      "type": "object",
+      "required": ["type", "condition", "then_body"],
+      "properties": {
+        "type": { "type": "string", "const": "IfStatement" },
+        "condition": { "$ref": "#/definitions/Expression" },
+        "then_body": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Statement" }
+        },
+        "else_body": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Statement" },
+          "default": []
+        }
+      }
+    },
+    "WhileStatement": {
+      "type": "object",
+      "required": ["type", "condition", "body"],
+      "properties": {
+        "type": { "type": "string", "const": "WhileStatement" },
+        "condition": { "$ref": "#/definitions/Expression" },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Statement" }
+        }
+      }
+    },
+    "ForStatement": {
+      "type": "object",
+      "required": ["type", "var", "iterable", "body"],
+      "properties": {
+        "type": { "type": "string", "const": "ForStatement" },
+        "var": { "type": "string" },
+        "iterable": { "$ref": "#/definitions/Expression" },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Statement" }
+        }
+      }
+    },
+    "Identifier": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "type": "string", "const": "Identifier" },
+        "name": { "type": "string" }
+      }
+    },
+    "StringLiteral": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string", "const": "StringLiteral" },
+        "value": { "type": "string" }
+      }
+    },
+    "NumberLiteral": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string", "const": "NumberLiteral" },
+        "value": { "type": "number" }
+      }
+    },
+    "BooleanLiteral": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string", "const": "BooleanLiteral" },
+        "value": { "type": "boolean" }
+      }
+    },
+    "NullLiteral": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "const": "NullLiteral" }
+      }
+    },
+    "ListLiteral": {
+      "type": "object",
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "type": "string", "const": "ListLiteral" },
+        "elements": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Expression" }
+        }
+      }
+    },
+    "DictLiteral": {
+      "type": "object",
+      "required": ["type", "pairs"],
+      "properties": {
+        "type": { "type": "string", "const": "DictLiteral" },
+        "pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key", "value"],
+            "properties": {
+              "key": { "$ref": "#/definitions/Expression" },
+              "value": { "$ref": "#/definitions/Expression" }
+            }
+          }
+        }
+      }
+    },
+    "BinaryOp": {
+      "type": "object",
+      "required": ["type", "op", "left", "right"],
+      "properties": {
+        "type": { "type": "string", "const": "BinaryOp" },
+        "op": { "type": "string", "enum": ["+", "-", "*", "/", "%", "y", "o", "no", "es", "==", "!=", ">", "<", ">=", "<="] },
+        "left": { "$ref": "#/definitions/Expression" },
+        "right": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "FunctionCall": {
+      "type": "object",
+      "required": ["type", "func", "args"],
+      "properties": {
+        "type": { "type": "string", "const": "FunctionCall" },
+        "func": { "type": "string" },
+        "args": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Expression" }
+        }
+      }
+    },
+    "PipeExpression": {
+      "type": "object",
+      "required": ["type", "steps"],
+      "properties": {
+        "type": { "type": "string", "const": "PipeExpression" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Expression" },
+          "minItems": 2
+        }
+      }
+    },
+    "CyberScan": {
+      "type": "object",
+      "required": ["type", "target", "ports"],
+      "properties": {
+        "type": { "type": "string", "const": "CyberScan" },
+        "target": { "$ref": "#/definitions/Expression" },
+        "ports": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Expression" }
+        }
+      }
+    },
+    "CyberAttack": {
+      "type": "object",
+      "required": ["type", "target", "wordlist", "username"],
+      "properties": {
+        "type": { "type": "string", "const": "CyberAttack" },
+        "target": { "$ref": "#/definitions/Expression" },
+        "wordlist": { "$ref": "#/definitions/Expression" },
+        "username": { "$ref": "#/definitions/Expression" }
+      }
+    },
+    "CyberRecon": {
+      "type": "object",
+      "required": ["type", "domain"],
+      "properties": {
+        "type": { "type": "string", "const": "CyberRecon" },
+        "domain": { "$ref": "#/definitions/Expression" }
+      }
+    }
+  }
+}
