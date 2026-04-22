@@ -5,7 +5,7 @@ Todos los nodos son dataclasses inmutables con un campo `line` para tracking de 
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 
 
 @dataclass
