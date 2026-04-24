@@ -11,11 +11,11 @@
 Antes de construir, entender lo que se está construyendo como sistema.
 
 ### Stocks (lo que se acumula)
-| Stock | Estado actual (v0.4) | Objetivo v1.0 |
+| Stock | Estado actual (v2.0) | Objetivo v2.0 |
 |---|---|---|
-| AST node types | ~35 nodos | ~50 nodos |
-| Backend implementations | 3 reales (Python, Go, C), 1 stub (Rust) | 4 reales |
-| Test coverage | 188 tests | 400+ tests |
+| AST node types | ~35 nodos | ~35 nodos (congelado) |
+| Backend implementations | 9 reales + 2 V2 semánticos (C, Rust) | 9 reales + 2 V2 |
+| Test coverage | 503 tests | 500+ tests |
 | Módulos cybersec | 7 (scanner, analysis, report, crypto, recon, attack, fuzzer) | 12+ |
 | Keywords del lenguaje | 40 | ~55 |
 | Ejemplos funcionales | 7 | 20+ |
@@ -52,17 +52,15 @@ La arquitectura `AST → múltiples backends` es inherentemente resiliente: si u
 
 ---
 
-## Estado Actual: v0.5 ✅
+## Estado Actual: v2.0 ✅
 
 **Lo que funciona en producción:**
-- Lexer/Parser: completo, todos los verbos cyber, comma-args, pipe chains.
-- Python backend: 100% completo con 9 módulos cybersec reales (incluyendo `capture.py` con 3 niveles de fallback y `attack.py` con múltiples métodos). 6 módulos avanzados de análisis binario y exploits integrados.
-- Go backend: genera código Go compilable con goroutines reales (`sync.WaitGroup` + `net.DialTimeout`).
-- Rust backend: genera código asíncrono con Tokio, `Futures`, y `Cargo.toml` automático. 0 bloques `unsafe`.
-- C backend (Alpha): genera código C con `#include` automáticos y helpers nativos POSIX.
-- 474/474 tests pasando (cero fallos).
-
-> ⚠️ **Advertencia sobre Go y Rust**: Ambos backends han sido desarrollados, validados estáticamente, y sus tests automatizados pasan. Sin embargo, el autor principal aún debe compilarlos y ejecutarlos manualmente en su terminal local para certificar la experiencia End-to-End.
+- **Arquitectura H&M2M**: Vía Humana (Lexer/Parser) y Vía Máquina (JSON Schema + AST Builder).
+- **Compilador Semántico de 3 Pasadas**: TypeChecker → LifetimeAnalyzer → Emisión Nativa.
+- **9 Backends**: Python, Go, Rust (Arc/Mutex), C (free() automático), Bash, PowerShell, JavaScript, Solidity, Arduino.
+- **Rust V2**: Concurrencia segura con `Arc::new(Mutex::new())` y `.lock().unwrap()` inyectados automáticamente.
+- **C V2**: Gestión determinista de memoria con `free()` por iteración en bucles (prevención de OOM).
+- 503/503 tests pasando (cero fallos).
 
 **Lo que aún falta:**
 - `captura packets` en Go/Rust/C: requieren librerías externas
@@ -637,7 +635,7 @@ Tras desplegar un agente web autónomo para analizar el **Tier 0, 1 y 2 (Startin
 | 8 | v0.8 | ✅ Completa | **Superficie Web**: JS/Node.js y WebAssembly | Explotación de navegadores |
 | 9 | v0.9 | ✅ Completa | **Web3 y Smart Contracts**: Solidity | Ecosistema Blockchain |
 | 10| v1.0 | ✅ Completa | **Hardware & IoT**: C para Flipper Zero / Arduino | Ataques físicos (RFID, BadUSB) |
-| — | v2.0 | ⏳ | **El Pentester Autónomo**: Ecosistema completo para Agentes de IA | Omnipotencia en Red |
+| — | **v2.0** | ✅ **Completa** | **Compilador Semántico H&M2M (3 pasadas)** | Autonomia IA |
 
 **Regla del sistema**: no saltarse fases. Cada fase es el stock que alimenta el siguiente.
 

@@ -61,6 +61,20 @@ class RustTranspiler:
         val_str = self._evaluate(node.value)
         self.output.append(f'{self._indent()}println!("{{:?}}", {val_str});')
 
+    def _visit_ExpressionStatement(self, node: ExpressionStatement):
+        if node.expr:
+            method = f"_visit_{type(node.expr).__name__}"
+            if hasattr(self, method):
+                self._visit(node.expr)
+            else:
+                expr_str = self._evaluate(node.expr)
+                self.output.append(f"{self._indent()}{expr_str};")
+
+    def _visit_SaveStatement(self, node: SaveStatement):
+        val_str = self._evaluate(node.value) if node.value else '""'
+        fname_str = self._evaluate(node.filename) if node.filename else '"output.txt"'
+        self.output.append(f"{self._indent()}std::fs::write({fname_str}, format!(\"{{:?}}\", {val_str})).expect(\"Error escribiendo archivo\");")
+
     def _visit_CyberScan(self, node: CyberScan):
         # CyberScan en Rust V2 usa tareas asíncronas coleccionadas
         target = self._evaluate(node.target)

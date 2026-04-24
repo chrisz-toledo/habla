@@ -83,8 +83,13 @@ class CTranspiler:
 
     def _visit_ExpressionStatement(self, node: ExpressionStatement):
         if node.expr:
-            expr_str = self._evaluate(node.expr)
-            self._emit_line(f"{expr_str};")
+            # Si el nodo interno tiene un visitor propio (ej. CyberScan), delegar
+            method = f"_visit_{type(node.expr).__name__}"
+            if hasattr(self, method):
+                self._visit(node.expr)
+            else:
+                expr_str = self._evaluate(node.expr)
+                self._emit_line(f"{expr_str};")
 
     def _visit_ShowStatement(self, node: ShowStatement):
         val_str = self._evaluate(node.value)

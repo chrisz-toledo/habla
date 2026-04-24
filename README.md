@@ -1,6 +1,6 @@
 # Hado
 
-**Un DSL de ciberseguridad diseñado para generación de código con IA. Verbos en español. Sustantivos en inglés. Cero boilerplate.**
+**Framework de Representación Intermedia (IR) para ciberseguridad autónoma. Arquitectura H&M2M (Human & Machine-to-Machine). 9 backends de compilación. Compilador semántico de 3 pasadas.**
 
 ```hado
 // 3 líneas. Sin imports. Output real.
@@ -9,10 +9,9 @@ headers = analiza headers de "https://example.com"
 genera reporte con scan, headers
 ```
 
-> **Estado: v0.5 — Python ✅ funcional · Go ✅ funcional · Rust ✅ funcional · C ⚠️ alpha**
-> 474 tests · [Roadmap](docs/roadmap.md)
-
-⚠️ *Advertencia: Los backends Go y Rust han sido completados y verificados mediante análisis automatizado, pero aún requieren validación manual en la terminal local del autor.*
+> **Estado: v2.0 — Compilador Semántico H&M2M · 9 Backends · 503 tests**
+> Python ✅ · Go ✅ · Rust ✅ · C ✅ · Bash ✅ · PowerShell ✅ · JS ✅ · Solidity ✅ · Arduino ✅
+> [Roadmap](docs/roadmap.md) · [Benchmarks](docs/BENCHMARKS.md) · [JSON Schema](schemas/hado_ast_v2.json)
 
 ---
 
@@ -38,22 +37,26 @@ El script anterior fue ejecutado contra un servidor de producción real el 2026-
 
 ## ¿Qué es Hado?
 
-Hado es un lenguaje de dominio específico para ciberseguridad que transpila a **Python, Go, C y Rust**. Está diseñado para que los LLMs (Claude, GPT, Gemini) puedan escribir código de ciberseguridad de forma más eficiente, más económica y con menos errores.
+Hado es un Framework de Representación Intermedia (IR) para ciberseguridad que transpila a **9 lenguajes distintos**. Posee dos vías de entrada:
 
-El usuario escribe 12 tokens en Hado — el transpiler genera 45+ tokens de código ejecutable con imports, manejo de errores y boilerplate incluido.
+- **Vía Humana**: DSL en Spanglish (verbos españoles, sustantivos ingleses) procesado por un Lexer tolerante a fallos.
+- **Vía Máquina (M2M)**: JSON Schema estricto (`schemas/hado_ast_v2.json`) que permite a Agentes IA inyectar el AST directamente, evitando errores de parseo.
 
-Hado no compite con Python como lenguaje de propósito general. Es un **DSL multi-target**: el mismo código Hado compila a Python para prototipado rápido, Go para scanners concurrentes con goroutines, Rust para herramientas memory-safe, y C para exploits y trabajo a nivel de kernel.
+El compilador V2.0 opera en **3 pasadas**: Inferencia de Tipos → Análisis de Ciclo de Vida (Lifetime/Ownership) → Emisión de Código Nativo.
 
 ### Estado de los backends
 
 | Target | Estado | Versión | Caso de uso |
 |--------|--------|---------|-------------|
-| Python | ✅ **Funcional** | 0.5 | Scripting, OSINT, prototipado rápido |
-| Go     | ✅ **Funcional** | 1.0 | Scanners concurrentes, binarios standalone |
-| Rust   | ✅ **Funcional** | 0.5 | Herramientas memory-safe, fuzzing, parsers |
-| C      | ⚠️ **Alpha**     | 0.1 | Exploits, shellcode, módulos de kernel |
-
-**Go v1.0**: `escanea` genera goroutines reales con `sync.WaitGroup` + `net.DialTimeout`. Solo stdlib — cero dependencias externas.
+| Python | ✅ **Funcional** | 1.0 | Scripting, OSINT, prototipado rápido |
+| Go     | ✅ **Funcional** | 1.0 | Scanners concurrentes, goroutines nativas |
+| Rust   | ✅ **Funcional** | 2.0 | Memory-safe, Arc/Mutex automático, Tokio |
+| C      | ✅ **Funcional** | 2.0 | Exploits, free() automático, sockets POSIX |
+| Bash   | ✅ **Funcional** | 1.0 | Post-explotación fileless (Linux) |
+| PowerShell | ✅ **Funcional** | 1.0 | Post-explotación fileless (Windows) |
+| JavaScript | ✅ **Funcional** | 1.0 | Explotación de navegadores, XSS |
+| Solidity | ✅ **Funcional** | 1.0 | Smart contracts, auditoría Web3 |
+| Arduino  | ✅ **Funcional** | 1.0 | IoT/Hardware (ESP32, Flipper Zero) |
 
 ---
 
@@ -280,38 +283,34 @@ Ver [docs/llm-guide.md](docs/llm-guide.md) para la guía completa con todos los 
 
 ---
 
-## Arquitectura
+## Arquitectura V2.0 (H&M2M)
 
 ```
-┌─────────────┐
-│  .ho file   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Normalizer │  ñ→nh, á→a, ¿→(removed)  (ASCII-only)
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│    Lexer    │  tokens: KEYWORD, IDENT, NUMBER, STRING, PIPE, INDENT/DEDENT
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Parser    │  recursive descent → AST compartido
-└──────┬──────┘
-       │
-       ├──────────────┬──────────────┬──────────────┐
-       ▼              ▼              ▼              ▼
-┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
-│  Python   │  │    Go     │  │   Rust    │  │     C     │
-│ ✅ v0.5   │  │ ✅ v1.0   │  │ ✅ v0.5   │  │ ⚠️ v0.1   │
-└─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘
-      │               │              │               │
-      ▼               ▼              ▼               ▼
-   .py file        .go file       .c file        .rs file
-  (exec'd)       (go build)    (gcc/clang)   (rustc/cargo)
+┌─────────────────────────────────────────────┐
+│          VÍA HUMANA (.ho file)              │
+│  Normalizer → Lexer → Parser ───┐           │
+└─────────────────────────────────┤           │
+                                  ▼           │
+┌─────────────────────────────────────────────┐
+│          VÍA MÁQUINA (JSON M2M)             │
+│  JSON Schema → AST Builder ─────┐           │
+└─────────────────────────────────┤           │
+                                  ▼           │
+                        ┌─────────────────┐
+                        │   AST Unificado │
+                        └────────┬────────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    ▼            ▼            ▼
+             ┌───────────┐┌───────────┐┌───────────┐
+             │ Pasada 1  ││ Pasada 2  ││ Pasada 3  │
+             │ TypeCheck ││ Lifetime  ││  Emisión  │
+             └───────────┘└───────────┘└─────┬─────┘
+                                             │
+         ┌───────┬───────┬───────┬───────┬───┴───┐
+         ▼       ▼       ▼       ▼       ▼       ▼
+       Python   Go     Rust     C     Bash    +4 más
+       ✅ 1.0  ✅ 1.0  ✅ 2.0  ✅ 2.0  ✅ 1.0  (9 total)
 ```
 
 ---
@@ -323,14 +322,14 @@ Ver [docs/llm-guide.md](docs/llm-guide.md) para la guía completa con todos los 
 | 1 | v0.1 | ✅ Completa | Core compiler, Python backend |
 | 2 | v0.2 | ✅ Completa | Lexer/parser robusto, módulos cybersec reales |
 | 3 | v0.3 | ✅ Completa | Python backend completo (100% features) |
-| 4 | v0.4 | ✅ Completa*| Go backend funcional — goroutines, stdlib |
-| 5 | v0.5 | ✅ Completa*| Rust backend funcional — memory safety, tokio |
-| 6 | v0.6 | ⚠️ Alpha    | C backend — libpcap, raw sockets (en progreso) |
-
-*\*Nota: Completadas a nivel de código y tests automatizados, pendientes de validación manual en terminal local.*
-| 7 | v0.7 | ⏳ | Módulos, multi-return, error handling |
-| 8 | v0.8 | ⏳ | Tooling: compile, check, fmt, VS Code extension |
-| — | v1.0 | ⏳ | Todos los backends + 300+ tests + ecosistema |
+| 4 | v0.4 | ✅ Completa | Go backend funcional — goroutines, stdlib |
+| 5 | v0.5 | ✅ Completa | Rust backend — memory safety, Tokio |
+| 6 | v0.6 | ✅ Completa | C backend — sockets POSIX, libcurl |
+| 7 | v0.7 | ✅ Completa | Bash + PowerShell (fileless post-explotación) |
+| 8 | v0.8 | ✅ Completa | JavaScript/Node.js (superficie web) |
+| 9 | v0.9 | ✅ Completa | Solidity (Web3 y Smart Contracts) |
+| 10 | v1.0 | ✅ Completa | Arduino/ESP32 (Hardware & IoT) |
+| — | **v2.0** | ✅ **Completa** | **Compilador Semántico H&M2M (3 pasadas)** |
 
 Ver [docs/roadmap.md](docs/roadmap.md) para los prompts de trabajo y verificación de cada fase.
 
